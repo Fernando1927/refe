@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReferencIA - Generador APA 7</title>
+    <title>ReferencIA - Generador de Citas y Referencias APA 7</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -19,6 +19,42 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        /* Estilo para cursiva en Tailwind, necesario para <i> */
+        .italic {
+            font-style: italic;
+        }
+        /* Estilo para la lista de citas guardadas */
+        .saved-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .saved-item-text {
+            flex-grow: 1;
+            margin-right: 1rem;
+        }
+        /* Estilo del modal de confirmación */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 p-4 sm:p-8">
@@ -78,29 +114,56 @@
                 </div>
             </div>
 
-            <!-- Contenedor para los autores -->
-            <div id="author-fields" class="space-y-6 mb-8 hidden">
+            <!-- Contenedor para los autores del capítulo (principal) -->
+            <div id="chapter-author-fields" class="space-y-6 mb-8 hidden">
+                <h3 class="text-lg font-semibold text-gray-700">Autores del Capítulo</h3>
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div class="w-full sm:w-1/2">
-                        <label for="author-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Autor</label>
-                        <select id="author-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                        <label for="chapter-author-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Autor</label>
+                        <select id="chapter-author-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
                             <option value="persona">Persona</option>
                             <option value="corporativo">Corporativo</option>
                         </select>
                     </div>
-                    <div id="persona-count-container" class="w-full sm:w-1/2">
-                        <label for="persona-count" class="block text-sm font-medium text-gray-700 mb-2">Número de Autores (Persona)</label>
-                        <input type="number" id="persona-count" min="1" value="1" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                    <div id="chapter-persona-count-container" class="w-full sm:w-1/2">
+                        <label for="chapter-persona-count" class="block text-sm font-medium text-gray-700 mb-2">Número de Autores (Persona)</label>
+                        <input type="number" id="chapter-persona-count" min="1" value="1" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
                     </div>
                 </div>
-                <!-- Contenedor para los inputs de autor persona -->
-                <div id="persona-author-container" class="space-y-4"></div>
-                <!-- Contenedor para el input de autor corporativo -->
-                <div id="corporativo-author-container" class="hidden">
-                    <label for="corporativo-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Institución/Organización *</label>
-                    <input type="text" id="corporativo-name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <!-- Contenedor para los inputs de autor persona del capítulo -->
+                <div id="chapter-persona-author-container" class="space-y-4"></div>
+                <!-- Contenedor para el input de autor corporativo del capítulo -->
+                <div id="chapter-corporativo-author-container" class="hidden">
+                    <label for="chapter-corporativo-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Institución/Organización *</label>
+                    <input type="text" id="chapter-corporativo-name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
+
+            <!-- Contenedor para autores/editores del libro (aparece solo con capitulo-libro) -->
+            <div id="book-editor-fields" class="space-y-6 mb-8 hidden">
+                <h3 class="text-lg font-semibold text-gray-700">Autores o Editores del Libro</h3>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="w-full sm:w-1/2">
+                        <label for="book-editor-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Autor</label>
+                        <select id="book-editor-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                            <option value="persona">Persona</option>
+                            <option value="corporativo">Corporativo</option>
+                        </select>
+                    </div>
+                    <div id="book-persona-count-container" class="w-full sm:w-1/2">
+                        <label for="book-persona-count" class="block text-sm font-medium text-gray-700 mb-2">Número de Editores (Persona)</label>
+                        <input type="number" id="book-persona-count" min="1" value="1" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                    </div>
+                </div>
+                <!-- Contenedor para los inputs de editor persona del libro -->
+                <div id="book-persona-editor-container" class="space-y-4"></div>
+                <!-- Contenedor para el input de editor corporativo del libro -->
+                <div id="book-corporativo-editor-container" class="hidden">
+                    <label for="book-corporativo-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Institución/Organización *</label>
+                    <input type="text" id="book-corporativo-name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
 
             <!-- Botón para generar -->
             <div class="text-center">
@@ -127,31 +190,91 @@
                     <p id="reference-result" class="whitespace-pre-line"></p>
                 </div>
             </div>
+            <!-- Botón para guardar la cita -->
+            <div class="mt-6 text-center">
+                <button id="save-button" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300 transform hover:scale-105">
+                    Guardar Cita
+                </button>
+            </div>
         </div>
 
-        <!-- Contenedor de mensajes de error -->
-        <div id="error-message" class="mt-6 p-4 bg-red-100 text-red-700 rounded-lg border border-red-300 hidden">
-            <p>Por favor, complete todos los campos requeridos.</p>
+        <!-- Contenedor de citas guardadas -->
+        <div id="saved-container" class="mt-10 p-6 bg-gray-50 rounded-lg border-2 border-gray-200 hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-blue-800">Citas Guardadas</h2>
+            <div id="saved-list" class="space-y-4">
+                <!-- Las citas guardadas se renderizarán aquí -->
+            </div>
         </div>
+        
+        <!-- Contenedor de mensajes de estado -->
+        <div id="message-box" class="mt-6 p-4 rounded-lg border hidden">
+            <p id="message-text"></p>
+        </div>
+        
+        <!-- ID de usuario para colaboración (invisible) -->
+        <p id="user-id-display" class="text-sm text-gray-400 mt-4 text-center hidden">ID de Usuario: <span id="user-id-value"></span></p>
     </div>
     
-    <script>
-        // Obtenemos referencias a los elementos del DOM
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase services
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let userId;
+
+        // DOM elements
         const sourceTypeSelect = document.getElementById('source-type');
         const citationTypeSelect = document.getElementById('citation-type');
         const sourceFieldsContainer = document.getElementById('source-fields');
         const textualFieldsContainer = document.getElementById('textual-fields');
-        const authorFieldsContainer = document.getElementById('author-fields');
-        const authorTypeSelect = document.getElementById('author-type');
-        const personaCountInput = document.getElementById('persona-count');
-        const personaCountContainer = document.getElementById('persona-count-container');
-        const personaAuthorContainer = document.getElementById('persona-author-container');
-        const corporativoAuthorContainer = document.getElementById('corporativo-author-container');
+        
+        // Elementos para el manejo de autores/editores
+        const chapterAuthorFieldsContainer = document.getElementById('chapter-author-fields');
+        const chapterAuthorTypeSelect = document.getElementById('chapter-author-type');
+        const chapterPersonaCountInput = document.getElementById('chapter-persona-count');
+        const chapterPersonaCountContainer = document.getElementById('chapter-persona-count-container');
+        const chapterPersonaAuthorContainer = document.getElementById('chapter-persona-author-container');
+        const chapterCorporativoAuthorContainer = document.getElementById('chapter-corporativo-author-container');
+        
+        const bookEditorFieldsContainer = document.getElementById('book-editor-fields');
+        const bookEditorTypeSelect = document.getElementById('book-editor-type');
+        const bookPersonaCountInput = document.getElementById('book-persona-count');
+        const bookPersonaCountContainer = document.getElementById('book-persona-count-container');
+        const bookPersonaEditorContainer = document.getElementById('book-persona-editor-container');
+        const bookCorporativoEditorContainer = document.getElementById('book-corporativo-editor-container');
+
         const generateButton = document.getElementById('generate-button');
+        const saveButton = document.getElementById('save-button');
         const resultsContainer = document.getElementById('results-container');
         const citationResult = document.getElementById('citation-result');
         const referenceResult = document.getElementById('reference-result');
-        const errorMessage = document.getElementById('error-message');
+        const savedContainer = document.getElementById('saved-container');
+        const savedList = document.getElementById('saved-list');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        // Función para mostrar mensajes de estado
+        function showMessage(message, type = 'error') {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            if (type === 'error') {
+                messageBox.classList.remove('bg-green-100', 'text-green-700', 'border-green-300');
+                messageBox.classList.add('bg-red-100', 'text-red-700', 'border-red-300');
+            } else {
+                messageBox.classList.remove('bg-red-100', 'text-red-700', 'border-red-300');
+                messageBox.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+            }
+        }
         
         // Define los campos para cada tipo de fuente
         const sourceFields = {
@@ -182,37 +305,27 @@
             'capitulo-libro': `
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="capitulo-title" class="block text-sm font-medium text-gray-700 mb-2">Título del Capítulo o la Entrada *</label>
+                        <label for="capitulo-title" class="block text-sm font-medium text-gray-700 mb-2">Título del Capítulo *</label>
                         <input type="text" id="capitulo-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label for="capitulo-editor-apellido" class="block text-sm font-medium text-gray-700 mb-2">Apellido(s) del Editor(es) *</label>
-                        <input type="text" id="capitulo-editor-apellido" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="capitulo-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
+                        <input type="number" id="capitulo-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label for="capitulo-editor-nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre(s) del Editor(es) (Iniciales) *</label>
-                        <input type="text" id="capitulo-editor-nombre" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="capitulo-paginas" class="block text-sm font-medium text-gray-700 mb-2">Páginas del Capítulo (e.g., 100-150) *</label>
+                        <input type="text" id="capitulo-paginas" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label for="libro-title" class="block text-sm font-medium text-gray-700 mb-2">Título del Libro *</label>
-                        <input type="text" id="libro-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="libro-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
-                        <input type="number" id="libro-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="capitulo-paginas" class="block text-sm font-medium text-gray-700 mb-2">Páginas del Capítulo (e.g., 100-150)</label>
-                        <input type="text" id="capitulo-paginas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <label for="capitulo-editorial" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la editorial *</label>
+                        <input type="text" id="capitulo-editorial" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
                 <div>
-                    <label for="capitulo-editorial" class="block text-sm font-medium text-gray-700 mb-2">Editorial *</label>
-                    <input type="text" id="capitulo-editorial" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label for="capitulo-libro-title" class="block text-sm font-medium text-gray-700 mb-2">Nombre del Libro *</label>
+                    <input type="text" id="capitulo-libro-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="capitulo-url" class="block text-sm font-medium text-gray-700 mb-2">URL o DOI (opcional)</label>
@@ -287,8 +400,8 @@
                     </div>
                 </div>
                 <div>
-                    <label for="informe-entidad" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Entidad Gubernamental *</label>
-                    <input type="text" id="informe-entidad" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label for="informe-entidad" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Entidad Gubernamental (opcional)</label>
+                    <input type="text" id="informe-entidad" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="informe-number" class="block text-sm font-medium text-gray-700 mb-2">Número de la Publicación (opcional)</label>
@@ -374,59 +487,96 @@
         // Escuchadores de eventos
         sourceTypeSelect.addEventListener('change', () => {
             const type = sourceTypeSelect.value;
-            if (type) {
-                sourceFieldsContainer.innerHTML = sourceFields[type];
-                authorFieldsContainer.classList.remove('hidden');
-            } else {
-                sourceFieldsContainer.innerHTML = '';
-                authorFieldsContainer.classList.add('hidden');
-            }
+            sourceFieldsContainer.innerHTML = type ? sourceFields[type] : '';
             resultsContainer.classList.add('hidden');
+            showMessage("", "info"); // Clear messages
+
+            // Muestra u oculta los campos de autor/editor según el tipo de fuente
+            const isChapter = type === 'capitulo-libro';
+            chapterAuthorFieldsContainer.classList.toggle('hidden', !isChapter && type !== 'libro' && type !== 'articulo-cientifico' && type !== 'tesis' && type !== 'sitio-web' && type !== 'informe-gubernamental');
+            bookEditorFieldsContainer.classList.toggle('hidden', !isChapter);
+
+            // También oculta los campos de autor principales cuando se selecciona 'ley' o 'tratado-convencion'
+            const isLegal = type === 'ley' || type === 'tratado-convencion';
+            chapterAuthorFieldsContainer.classList.toggle('hidden', isLegal);
+
+            // Resetea los campos de autor cuando se cambia de tipo de fuente
+            updateChapterPersonaAuthorInputs(1);
+            updateBookEditorInputs(1);
         });
         
         citationTypeSelect.addEventListener('change', () => {
-            if (citationTypeSelect.value === 'textual') {
-                textualFieldsContainer.classList.remove('hidden');
-            } else {
-                textualFieldsContainer.classList.add('hidden');
+            textualFieldsContainer.classList.toggle('hidden', citationTypeSelect.value !== 'textual');
+        });
+
+        // Eventos para el manejo de autores de capítulo
+        chapterAuthorTypeSelect.addEventListener('change', () => {
+            const isPersona = chapterAuthorTypeSelect.value === 'persona';
+            chapterPersonaCountContainer.classList.toggle('hidden', !isPersona);
+            chapterPersonaAuthorContainer.classList.toggle('hidden', !isPersona);
+            chapterCorporativoAuthorContainer.classList.toggle('hidden', isPersona);
+            if (isPersona) {
+                updateChapterPersonaAuthorInputs(chapterPersonaCountInput.value);
             }
         });
 
-        authorTypeSelect.addEventListener('change', () => {
-            if (authorTypeSelect.value === 'persona') {
-                personaCountContainer.classList.remove('hidden');
-                personaAuthorContainer.classList.remove('hidden');
-                corporativoAuthorContainer.classList.add('hidden');
-                updatePersonaAuthorInputs(personaCountInput.value);
-            } else {
-                personaCountContainer.classList.add('hidden');
-                personaAuthorContainer.classList.add('hidden');
-                corporativoAuthorContainer.classList.remove('hidden');
+        chapterPersonaCountInput.addEventListener('input', () => {
+            updateChapterPersonaAuthorInputs(chapterPersonaCountInput.value);
+        });
+
+        // Eventos para el manejo de autores/editores de libro
+        bookEditorTypeSelect.addEventListener('change', () => {
+            const isPersona = bookEditorTypeSelect.value === 'persona';
+            bookPersonaCountContainer.classList.toggle('hidden', !isPersona);
+            bookPersonaEditorContainer.classList.toggle('hidden', !isPersona);
+            bookCorporativoEditorContainer.classList.toggle('hidden', isPersona);
+            if (isPersona) {
+                updateBookEditorInputs(bookPersonaCountInput.value);
             }
         });
-
-        personaCountInput.addEventListener('input', () => {
-            updatePersonaAuthorInputs(personaCountInput.value);
+        
+        bookPersonaCountInput.addEventListener('input', () => {
+            updateBookEditorInputs(bookPersonaCountInput.value);
         });
 
-        // Función para actualizar los inputs de autores persona
-        function updatePersonaAuthorInputs(count) {
+        // Funciones para actualizar los inputs de autores persona
+        function updateChapterPersonaAuthorInputs(count) {
             let html = '';
             for (let i = 1; i <= count; i++) {
                 html += `
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="persona-apellido-${i}" class="block text-sm font-medium text-gray-700 mb-2">Apellido(s) Autor ${i} *</label>
-                            <input type="text" id="persona-apellido-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <label for="chapter-persona-apellido-${i}" class="block text-sm font-medium text-gray-700 mb-2">Apellido(s) Autor ${i} *</label>
+                            <input type="text" id="chapter-persona-apellido-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div>
-                            <label for="persona-nombre-${i}" class="block text-sm font-medium text-gray-700 mb-2">Nombre(s) Autor ${i} (Iniciales) *</label>
-                            <input type="text" id="persona-nombre-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <label for="chapter-persona-nombre-${i}" class="block text-sm font-medium text-gray-700 mb-2">Nombre(s) Autor ${i} (Iniciales) *</label>
+                            <input type="text" id="chapter-persona-nombre-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
                 `;
             }
-            personaAuthorContainer.innerHTML = html;
+            chapterPersonaAuthorContainer.innerHTML = html;
+        }
+
+        // Funciones para actualizar los inputs de autores/editores de libro
+        function updateBookEditorInputs(count) {
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                html += `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="book-persona-apellido-${i}" class="block text-sm font-medium text-gray-700 mb-2">Apellido(s) Editor ${i} *</label>
+                            <input type="text" id="book-persona-apellido-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="book-persona-nombre-${i}" class="block text-sm font-medium text-gray-700 mb-2">Nombre(s) Editor ${i} (Iniciales) *</label>
+                            <input type="text" id="book-persona-nombre-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                `;
+            }
+            bookPersonaEditorContainer.innerHTML = html;
         }
 
         // Lógica principal de generación
@@ -448,35 +598,33 @@
                     throw new Error("Por favor, ingrese el número de página para la cita textual.");
                 }
                 
-                const authorType = authorTypeSelect.value;
                 let authors = [];
+                let bookEditors = [];
 
-                if (authorType === 'persona') {
-                    const personaCount = personaCountInput.value;
-                    for (let i = 1; i <= personaCount; i++) {
-                        const apellido = document.getElementById(`persona-apellido-${i}`).value.trim();
-                        const nombre = document.getElementById(`persona-nombre-${i}`).value.trim();
-                        if (!apellido || !nombre) {
-                            throw new Error("Por favor, complete los nombres y apellidos de todos los autores.");
-                        }
-                        authors.push({ apellido, nombre });
+                if (sourceType === 'capitulo-libro') {
+                    authors = getAuthorData('chapter');
+                    bookEditors = getAuthorData('book-editor');
+                    if (authors.length === 0) {
+                        throw new Error("Por favor, complete los datos de los autores del capítulo.");
                     }
-                } else { // Corporativo
-                    const corporativoName = document.getElementById('corporativo-name').value.trim();
-                    if (!corporativoName) {
-                        throw new Error("Por favor, ingrese el nombre de la institución.");
+                    if (bookEditors.length === 0) {
+                        throw new Error("Por favor, complete los datos de los autores o editores del libro.");
                     }
-                    authors.push({ name: corporativoName });
+                } else {
+                    authors = getAuthorData('main');
+                    if (authors.length === 0) {
+                        throw new Error("Por favor, complete los datos de los autores.");
+                    }
                 }
 
                 // Obtener datos específicos de la fuente
                 let data = {};
                 const requiredFields = {
                     'libro': ['libro-title', 'libro-year', 'libro-editorial'],
-                    'capitulo-libro': ['capitulo-title', 'capitulo-editor-apellido', 'capitulo-editor-nombre', 'libro-title', 'libro-year', 'capitulo-editorial'],
+                    'capitulo-libro': ['capitulo-title', 'capitulo-year', 'capitulo-libro-title', 'capitulo-paginas', 'capitulo-editorial'],
                     'articulo-cientifico': ['articulo-title', 'journal-title', 'articulo-year', 'journal-volume'],
                     'sitio-web': ['web-title', 'web-year', 'web-url', 'web-name'],
-                    'informe-gubernamental': ['informe-title', 'informe-year', 'informe-entidad'],
+                    'informe-gubernamental': ['informe-title', 'informe-year'],
                     'tesis': ['tesis-title', 'tesis-year', 'tesis-institucion', 'tesis-type'],
                     'ley': ['ley-nombre', 'ley-fecha', 'ley-fuente'],
                     'tratado-convencion': ['tratado-nombre', 'tratado-url']
@@ -496,9 +644,9 @@
                 // Obtener campos opcionales
                 const optionalFields = {
                     'libro': ['libro-edition', 'libro-url'],
-                    'capitulo-libro': ['capitulo-paginas', 'capitulo-url'],
+                    'capitulo-libro': ['capitulo-url'],
                     'articulo-cientifico': ['journal-issue', 'articulo-paginas', 'articulo-url'],
-                    'informe-gubernamental': ['informe-number', 'informe-url'],
+                    'informe-gubernamental': ['informe-entidad', 'informe-number', 'informe-url'],
                     'tesis': ['tesis-database', 'tesis-url'],
                     'ley': ['ley-seccion', 'ley-url'],
                     'tratado-convencion': ['tratado-fecha']
@@ -515,31 +663,349 @@
                 
                 // Generar los resultados
                 const citation = generateCitation(authors, data);
-                const reference = generateReference(sourceType, authors, data);
+                const reference = generateReference(sourceType, authors, bookEditors, data);
 
                 citationResult.innerHTML = citation;
                 referenceResult.innerHTML = reference;
                 
                 resultsContainer.classList.remove('hidden');
-                errorMessage.classList.add('hidden');
+                showMessage("", "info"); // Clear messages
 
             } catch (e) {
-                errorMessage.querySelector('p').textContent = e.message;
-                errorMessage.classList.remove('hidden');
+                showMessage(e.message, 'error');
                 resultsContainer.classList.add('hidden');
             }
         });
-        
-        // Función para generar la cita en el texto
-        function generateCitation(authors, data) {
-            const citationType = citationTypeSelect.value;
-            const year = data.libro_year || data.capitulo_year || data.articulo_year || data.web_year || data.informe_year || data.tesis_year || new Date().getFullYear(); // Si no hay año, usar año actual
 
-            let authorString = '';
-            const isCorporate = authorTypeSelect.value === 'corporativo';
+        // Event listener para el botón de guardar
+        saveButton.addEventListener('click', async () => {
+            const citationText = citationResult.innerHTML.trim();
+            const referenceText = referenceResult.innerHTML.trim();
+
+            if (!citationText || !referenceText) {
+                showMessage('No hay cita ni referencia para guardar.', 'error');
+                return;
+            }
+
+            try {
+                const sourceType = sourceTypeSelect.value;
+                const chapterAuthors = getAuthorData('chapter');
+                const bookEditors = getAuthorData('book-editor');
+                const mainAuthors = getAuthorData('main');
+                const authors = sourceType === 'capitulo-libro' ? chapterAuthors : mainAuthors;
+                
+                const authorType = sourceType === 'capitulo-libro' ? chapterAuthorTypeSelect.value : (sourceType === 'libro' || sourceType === 'articulo-cientifico' || sourceType === 'tesis' || sourceType === 'sitio-web' || sourceType === 'informe-gubernamental' ? 'persona' : 'corporativo');
+                
+                let primaryAuthor;
+                if (authors.length > 0) {
+                    primaryAuthor = authorType === 'persona' ? authors[0].apellido : authors[0].name;
+                } else if (sourceType === 'ley' || sourceType === 'tratado-convencion') {
+                    primaryAuthor = document.getElementById(`${sourceType}-nombre`).value.trim();
+                } else {
+                    primaryAuthor = 'Anónimo';
+                }
+
+                const yearInputId = `${sourceType.split('-')[0]}-year`;
+                const year = document.getElementById(yearInputId) ? document.getElementById(yearInputId).value.trim() : null;
+
+                if (!primaryAuthor || !year) {
+                    throw new Error("No se pudo obtener la información de autor o año para guardar.");
+                }
+
+                // 1. Buscamos citas existentes del mismo autor y año
+                const userCitationsRef = collection(db, `artifacts/${appId}/users/${userId}/saved_citations`);
+                const q = query(userCitationsRef);
+                const querySnapshot = await getDocs(q);
+                
+                const existingCitations = [];
+                querySnapshot.forEach(docSnapshot => {
+                    const data = docSnapshot.data();
+                    if (data.primaryAuthor === primaryAuthor && data.year === year) {
+                        existingCitations.push({ id: docSnapshot.id, data: data });
+                    }
+                });
+
+                // 2. Preparamos el array de todas las citas relevantes, incluida la nueva
+                const allCitations = [
+                    ...existingCitations,
+                    {
+                        data: {
+                            citation: citationText,
+                            reference: referenceText,
+                            timestamp: new Date(),
+                            primaryAuthor: primaryAuthor,
+                            year: year,
+                            sourceType: sourceTypeSelect.value,
+                            citationType: citationTypeSelect.value,
+                            sourceData: JSON.stringify(getFormData()),
+                            authorsData: JSON.stringify(authors),
+                            bookEditorsData: JSON.stringify(bookEditors),
+                        }
+                    }
+                ];
+
+                // 3. Ordenamos las citas por fecha de creación para asignar las letras en orden
+                allCitations.sort((a, b) => (a.data.timestamp instanceof Date ? a.data.timestamp : a.data.timestamp.toDate()) - (b.data.timestamp instanceof Date ? b.data.timestamp : b.data.timestamp.toDate()));
+                
+                // 4. Creamos un batch para realizar todas las escrituras y actualizaciones de manera atómica
+                const batch = writeBatch(db);
+                
+                const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
+                
+                // 5. Iteramos sobre las citas y asignamos las letras, actualizando las existentes y añadiendo la nueva
+                for (let i = 0; i < allCitations.length; i++) {
+                    const item = allCitations[i];
+                    const letter = allCitations.length > 1 ? letters[i] : '';
+                    
+                    const updatedCitation = generateCitation(JSON.parse(item.data.authorsData), JSON.parse(item.data.sourceData), letter);
+                    const updatedReference = generateReference(item.data.sourceType, JSON.parse(item.data.authorsData), JSON.parse(item.data.bookEditorsData), JSON.parse(item.data.sourceData), letter);
+                    
+                    if (item.id) { // Es una cita existente, la actualizamos
+                        const docRef = doc(userCitationsRef, item.id);
+                        batch.update(docRef, {
+                            citation: updatedCitation,
+                            reference: updatedReference,
+                            letter: letter
+                        });
+                    } else { // Es la nueva cita, la añadimos
+                        const newDocRef = doc(userCitationsRef);
+                        batch.set(newDocRef, {
+                            ...item.data,
+                            citation: updatedCitation,
+                            reference: updatedReference,
+                            letter: letter
+                        });
+                    }
+                }
+                
+                // 6. Ejecutamos el batch de escrituras
+                await batch.commit();
+                showMessage('¡Cita guardada y actualizada correctamente!', 'success');
+
+            } catch (e) {
+                showMessage(`Error al guardar la cita: ${e.message}`, 'error');
+                console.error("Error al guardar la cita: ", e);
+            }
+        });
+
+        // Función para obtener los datos de los autores de forma dinámica
+        function getAuthorData(type) {
+            let authors = [];
+            let authorTypeSelect, personaCountInput;
+            let personaAuthorContainer, corporativoAuthorContainer;
+            let personaInputPrefix, corporativoInputId;
+
+            if (type === 'chapter') {
+                authorTypeSelect = chapterAuthorTypeSelect;
+                personaCountInput = chapterPersonaCountInput;
+                personaAuthorContainer = chapterPersonaAuthorContainer;
+                corporativoAuthorContainer = chapterCorporativoAuthorContainer;
+                personaInputPrefix = 'chapter-persona-';
+                corporativoInputId = 'chapter-corporativo-name';
+            } else if (type === 'book-editor') {
+                authorTypeSelect = bookEditorTypeSelect;
+                personaCountInput = bookPersonaCountInput;
+                personaAuthorContainer = bookPersonaEditorContainer;
+                corporativoAuthorContainer = bookCorporativoEditorContainer;
+                personaInputPrefix = 'book-persona-';
+                corporativoInputId = 'book-corporativo-name';
+            } else { // 'main'
+                authorTypeSelect = document.getElementById('author-type');
+                personaCountInput = document.getElementById('persona-count');
+                personaAuthorContainer = document.getElementById('persona-author-container');
+                corporativoAuthorContainer = document.getElementById('corporativo-author-container');
+                personaInputPrefix = 'persona-';
+                corporativoInputId = 'corporativo-name';
+            }
+            
+            if (!authorTypeSelect) return authors;
+            
+            const authorType = authorTypeSelect.value;
+            
+            if (authorType === 'persona') {
+                const count = personaCountInput ? personaCountInput.value : 1;
+                for (let i = 1; i <= count; i++) {
+                    const apellido = document.getElementById(`${personaInputPrefix}apellido-${i}`)?.value?.trim();
+                    const nombre = document.getElementById(`${personaInputPrefix}nombre-${i}`)?.value?.trim();
+                    if (apellido && nombre) {
+                        authors.push({ apellido, nombre });
+                    }
+                }
+            } else { // Corporativo
+                const corporativoName = document.getElementById(corporativoInputId)?.value?.trim();
+                if (corporativoName) {
+                    authors.push({ name: corporativoName });
+                }
+            }
+            return authors;
+        }
+
+        // Función para obtener todos los datos de los formularios
+        function getFormData() {
+            const sourceType = sourceTypeSelect.value;
+            let data = {};
+            const allFields = {
+                'libro': ['libro-title', 'libro-year', 'libro-editorial', 'libro-edition', 'libro-url'],
+                'capitulo-libro': ['capitulo-title', 'capitulo-year', 'capitulo-libro-title', 'capitulo-paginas', 'capitulo-editorial', 'capitulo-url'],
+                'articulo-cientifico': ['articulo-title', 'journal-title', 'articulo-year', 'journal-volume', 'journal-issue', 'articulo-paginas', 'articulo-url'],
+                'sitio-web': ['web-title', 'web-year', 'web-url', 'web-name'],
+                'informe-gubernamental': ['informe-title', 'informe-year', 'informe-entidad', 'informe-number', 'informe-url'],
+                'tesis': ['tesis-title', 'tesis-year', 'tesis-institucion', 'tesis-type', 'tesis-database', 'tesis-url'],
+                'ley': ['ley-nombre', 'ley-fecha', 'ley-fuente', 'ley-seccion', 'ley-url'],
+                'tratado-convencion': ['tratado-nombre', 'tratado-fecha', 'tratado-url']
+            };
+
+            const fields = allFields[sourceType];
+            if (fields) {
+                fields.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input && input.value.trim()) {
+                        data[id.replace(/-/g, '_')] = input.value.trim();
+                    }
+                });
+            }
+            return data;
+        }
+
+        // Función para renderizar las citas guardadas
+        const renderSavedCitations = (docs) => {
+            savedList.innerHTML = ''; // Limpiar la lista
+            if (docs.length === 0) {
+                savedList.innerHTML = '<p class="text-gray-500 text-center">No hay citas guardadas aún. ¡Genera y guarda la primera!</p>';
+                savedContainer.classList.remove('hidden');
+                return;
+            }
+
+            docs.forEach(docSnapshot => {
+                const docData = docSnapshot.data();
+                const docId = docSnapshot.id;
+                
+                const listItem = document.createElement('div');
+                listItem.className = 'saved-item';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'saved-item-text';
+                contentDiv.innerHTML = `
+                    <p class="font-semibold text-lg mb-1">${docData.citation}</p>
+                    <p class="text-sm text-gray-600">${docData.reference}</p>
+                `;
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'px-4 py-2 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 transition duration-200';
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.onclick = async () => {
+                    const modal = document.createElement('div');
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content p-6 rounded-lg shadow-xl text-center">
+                            <p class="mb-4 text-gray-800">¿Estás seguro de que quieres eliminar esta cita?</p>
+                            <div class="flex justify-center gap-4">
+                                <button id="modal-confirm" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200">Sí, eliminar</button>
+                                <button id="modal-cancel" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition duration-200">Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+
+                    document.getElementById('modal-confirm').onclick = async () => {
+                        try {
+                            const docRef = doc(db, `artifacts/${appId}/users/${userId}/saved_citations`, docId);
+                            await deleteDoc(docRef);
+                            showMessage('Cita eliminada.', 'success');
+                            modal.remove();
+                        } catch (e) {
+                            showMessage(`Error al eliminar la cita: ${e.message}`, 'error');
+                            console.error("Error al eliminar la cita: ", e);
+                            modal.remove();
+                        }
+                    };
+
+                    document.getElementById('modal-cancel').onclick = () => {
+                        modal.remove();
+                    };
+                };
+
+                listItem.appendChild(contentDiv);
+                listItem.appendChild(deleteButton);
+                savedList.appendChild(listItem);
+            });
+            savedContainer.classList.remove('hidden');
+        };
+
+        // Escucha en tiempo real los cambios en las citas guardadas
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                // Muestra el ID de usuario
+                document.getElementById('user-id-value').textContent = userId;
+                document.getElementById('user-id-display').classList.remove('hidden');
+                
+                const userCitationsRef = collection(db, `artifacts/${appId}/users/${userId}/saved_citations`);
+                onSnapshot(userCitationsRef, (querySnapshot) => {
+                    const citations = [];
+                    querySnapshot.forEach((doc) => {
+                        citations.push(doc);
+                    });
+                    renderSavedCitations(citations);
+                });
+            } else {
+                // Si el usuario no está autenticado, no se muestra la lista de guardado
+                savedContainer.classList.add('hidden');
+            }
+        });
+
+        // Lógica de autenticación inicial
+        async function authenticate() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+            }
+        }
+        authenticate();
+
+        // Función para formatear una lista de autores/editores
+        function formatAuthors(authors) {
+            if (authors.length === 0) return '';
+            
+            const isCorporate = authors[0].name !== undefined;
 
             if (isCorporate) {
-                authorString = authors[0].name;
+                return authors[0].name;
+            }
+            
+            const authorParts = authors.map(a => {
+                const iniciales = a.nombre.split(' ').map(n => n[0].toUpperCase() + '.').join(' ');
+                return `${a.apellido}, ${iniciales}`;
+            });
+
+            if (authorParts.length === 1) {
+                return authorParts[0];
+            } else if (authorParts.length === 2) {
+                return `${authorParts[0]} y ${authorParts[1]}`;
+            } else if (authorParts.length > 20) {
+                return `${authorParts.slice(0, 19).join(', ')}, ... , ${authorParts[authorParts.length - 1]}`;
+            } else { // 3-20 autores
+                const lastAuthor = authorParts.pop();
+                return `${authorParts.join(', ')}, y ${lastAuthor}`;
+            }
+        }
+
+        // Función para generar la cita en el texto
+        function generateCitation(authors, data, letter = '') {
+            const citationType = citationTypeSelect.value;
+            const year = data.libro_year || data.capitulo_year || data.articulo_year || data.web_year || data.informe_year || data.tesis_year || new Date().getFullYear();
+            const yearWithLetter = `${year}${letter}`;
+            
+            let authorString = '';
+            const isCorporate = authors.length > 0 && authors[0].name;
+
+            if (isCorporate) {
+                authorString = authors[0].name ? authors[0].name : 'Organización Desconocida';
             } else {
                 if (authors.length > 2) {
                     authorString = authors[0].apellido + ' et al.';
@@ -549,9 +1015,9 @@
                     authorString = authors[0].apellido;
                 }
             }
-
+            
             if (citationType === 'paraphrased') {
-                return `(${authorString}, ${year})`;
+                return `(${authorString}, ${yearWithLetter})`;
             }
 
             // Lógica para citas textuales
@@ -562,25 +1028,25 @@
 
             if (wordCount < 40) {
                 if (citationStyle === 'narrative') {
-                    return `${authorString} (${year}) afirma, “${textualContent}” (p. ${page}).`;
+                    return `${authorString} (${yearWithLetter}) afirma, “${textualContent}” (p. ${page}).`;
                 } else { // Parentética
-                    return `“${textualContent}” (${authorString}, ${year}, p. ${page}).`;
+                    return `“${textualContent}” (${authorString}, ${yearWithLetter}, p. ${page}).`;
                 }
             } else { // Cita en bloque
                 let blockQuoteHTML;
                 if (citationStyle === 'narrative') {
                     blockQuoteHTML = `
-                        <p>${authorString} (${year}) afirma:</p>
-                        <blockquote style="margin-left: 1.27cm; margin-top: 1em; margin-bottom: 1em;">
+                        <p>${authorString} (${yearWithLetter}) afirma:</p>
+                        <blockquote class="pl-10 my-4 border-l-4 border-gray-400">
                             ${textualContent} (p. ${page}).
                         </blockquote>
                     `;
                 } else { // Parentética
                     blockQuoteHTML = `
-                        <blockquote style="margin-left: 1.27cm; margin-top: 1em; margin-bottom: 1em;">
+                        <blockquote class="pl-10 my-4 border-l-4 border-gray-400">
                             ${textualContent}
                         </blockquote>
-                        <p>(${authorString}, ${year}, p. ${page}).</p>
+                        <p>(${authorString}, ${yearWithLetter}, p. ${page}).</p>
                     `;
                 }
                 return blockQuoteHTML;
@@ -588,72 +1054,60 @@
         }
 
         // Función para generar la referencia completa
-        function generateReference(sourceType, authors, data) {
-            let authorString = '';
-            const isCorporate = authorTypeSelect.value === 'corporativo';
-
-            if (isCorporate) {
-                authorString = data.corporativo_name + '.';
-            } else {
-                const authorList = authors.map(a => {
-                    const iniciales = a.nombre.split(' ').map(n => n[0].toUpperCase() + '.').join(' ');
-                    return `${a.apellido}, ${iniciales}`;
-                });
-                
-                if (authorList.length > 20) {
-                     authorString = authorList.slice(0, 19).join(', ') + `, ... , ${authorList[authorList.length - 1]}`;
-                } else if (authorList.length === 2) {
-                    authorString = `${authorList[0]} y ${authorList[1]}`;
-                } else {
-                    authorString = authorList.join(', ');
-                }
-                authorString += '.';
-            }
-
+        function generateReference(sourceType, authors, bookEditors, data, letter = '') {
+            const year = data.libro_year || data.capitulo_year || data.articulo_year || data.web_year || data.informe_year || data.tesis_year || new Date().getFullYear();
+            const yearWithLetter = `${year}${letter}`;
+            
             let reference = '';
 
             switch (sourceType) {
                 case 'libro':
+                    const authorsStr = formatAuthors(authors);
                     const edition = data.libro_edition ? `(${data.libro_edition} ed.). ` : '';
                     const url = data.libro_url ? ` ${data.libro_url}` : '';
-                    reference = `${authorString} (${data.libro_year}). <i>${data.libro_title}</i>. ${edition}${data.libro_editorial}.${url}`;
+                    reference = `${authorsStr} (${yearWithLetter}). <i class="italic">${data.libro_title}</i>. ${edition}${data.libro_editorial}.${url}`;
                     break;
                 case 'capitulo-libro':
-                    const editorIniciales = data.capitulo_editor_nombre.split(' ').map(n => n[0].toUpperCase() + '.').join(' ');
-                    const editorStr = `${data.capitulo_editor_apellido}, ${editorIniciales}.`;
-                    const paginas = data.capitulo_paginas ? ` (pp. ${data.capitulo_paginas}).` : '.';
+                    const chapterAuthorsStr = formatAuthors(authors);
+                    const bookEditorsStr = formatAuthors(bookEditors);
+                    const pagesPart = data.capitulo_paginas ? `(pp. ${data.capitulo_paginas})` : '';
                     const capUrl = data.capitulo_url ? ` ${data.capitulo_url}` : '';
-                    reference = `${authorString} (${data.libro_year}). ${data.capitulo_title}. En ${editorStr} (Ed.), <i>${data.libro_title}</i>${paginas} ${data.capitulo_editorial}.${capUrl}`;
+                    reference = `${chapterAuthorsStr} (${yearWithLetter}). ${data.capitulo_title}. En ${bookEditorsStr} (Ed.), <i class="italic">${data.capitulo_libro_title}</i> ${pagesPart}. ${data.capitulo_editorial}.${capUrl}`;
                     break;
                 case 'articulo-cientifico':
+                    const articleAuthorsStr = formatAuthors(authors);
                     const issuePart = data.journal_issue ? `(${data.journal_issue})` : '';
-                    const pagesPart = data.articulo_paginas ? `, ${data.articulo_paginas}` : '';
+                    const pagesPartArticle = data.articulo_paginas ? `, ${data.articulo_paginas}` : '';
                     const doiPart = data.articulo_url ? ` ${data.articulo_url}` : '';
-                    reference = `${authorString} (${data.articulo_year}). ${data.articulo_title}. <i>${data.journal_title}</i>, <i>${data.journal_volume}</i>${issuePart}${pagesPart}.${doiPart}`;
+                    reference = `${articleAuthorsStr} (${yearWithLetter}). ${data.articulo_title}. <i class="italic">${data.journal_title}</i>, <i class="italic">${data.journal_volume}</i>${issuePart}${pagesPartArticle}.${doiPart}`;
                     break;
                 case 'sitio-web':
+                    const webAuthorsStr = formatAuthors(authors);
                     const webUrl = data.web_url ? ` ${data.web_url}` : '';
-                    reference = `${authorString} (${data.web_year}). <i>${data.web_title}</i>. ${data.web_name}.${webUrl}`;
+                    reference = `${webAuthorsStr} (${yearWithLetter}). <i class="italic">${data.web_title}</i>. ${data.web_name}.${webUrl}`;
                     break;
                 case 'informe-gubernamental':
+                    const informeAuthorsStr = formatAuthors(authors);
+                    const entidad = data.informe_entidad ? `${data.informe_entidad}. ` : '';
                     const numPub = data.informe_number ? ` (${data.informe_number}). ` : '. ';
                     const informeUrl = data.informe_url ? ` ${data.informe_url}` : '';
-                    reference = `${authorString} (${data.informe_year}). <i>${data.informe_title}</i>${numPub}${informeUrl}`;
+                    reference = `${informeAuthorsStr} (${yearWithLetter}). <i class="italic">${data.informe_title}</i>${numPub}${informeUrl}`;
                     break;
                 case 'tesis':
+                    const tesisAuthorsStr = formatAuthors(authors);
                     const dbName = data.tesis_database ? ` ${data.tesis_database}.` : '';
                     const tesisUrl = data.tesis_url ? ` ${data.tesis_url}` : '';
-                    reference = `${authorString} (${data.tesis_year}). <i>${data.tesis_title}</i> [${data.tesis_type}, ${data.tesis_institucion}].${dbName}${tesisUrl}`;
+                    reference = `${tesisAuthorsStr} (${yearWithLetter}). <i class="italic">${data.tesis_title}</i> [${data.tesis_type}, ${data.tesis_institucion}].${dbName}${tesisUrl}`;
                     break;
                 case 'ley':
                     const seccion = data.ley_seccion ? ` ${data.ley_seccion}.` : '.';
                     const leyUrl = data.ley_url ? ` ${data.ley_url}` : '';
-                    reference = `${data.ley_nombre}. (${data.ley_fecha}). ${data.ley_fuente}${seccion}${leyUrl}`;
+                    reference = `<i class="italic">${data.ley_nombre}</i>. (${data.ley_fecha}). ${data.ley_fuente}${seccion}${leyUrl}`;
                     break;
                 case 'tratado-convencion':
                     const fecha = data.tratado_fecha ? `, ${data.tratado_fecha}` : '';
                     const tratadoUrl = data.tratado_url ? `, ${data.tratado_url}` : '';
-                    reference = `${data.tratado_nombre}${fecha}${tratadoUrl}.`;
+                    reference = `<i class="italic">${data.tratado_nombre}</i>${fecha}${tratadoUrl}.`;
                     break;
                 default:
                     reference = 'Referencia no disponible para este tipo de fuente.';
@@ -665,7 +1119,8 @@
 
         // Inicializar los inputs de autores persona
         document.addEventListener('DOMContentLoaded', () => {
-            updatePersonaAuthorInputs(1);
+            updateChapterPersonaAuthorInputs(1);
+            updateBookEditorInputs(1);
         });
 
     </script>
