@@ -3,1126 +3,1289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReferencIA - Generador de Citas y Referencias APA 7</title>
-    <!-- Tailwind CSS CDN -->
+    <title>ReferencIA</title>
+    <!-- Incluye el framework de CSS Tailwind para un diseño moderno y responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                },
-            },
-        };
-    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        /* Estilo para cursiva en Tailwind, necesario para <i> */
-        .italic {
-            font-style: italic;
+        /* Define la fuente Inter para un aspecto limpio y moderno */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ffb347, #ff7a5c);
+            background-size: 200% 200%;
+            animation: gradient-animation 10s ease infinite;
         }
-        /* Estilo para la lista de citas guardadas */
-        .saved-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background-color: #f9fafb;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
+
+        /* Define la animación para el degradado de fondo */
+        @keyframes gradient-animation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
-        .saved-item-text {
-            flex-grow: 1;
-            margin-right: 1rem;
+        
+        /* Personaliza la barra de desplazamiento */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        /* Estilo del modal de confirmación */
-        .modal {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            z-index: 50;
+        ::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
         }
-        .modal-content {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        ::-webkit-scrollbar-thumb {
+            background: #ff9933;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff7a5c;
+        }
+        /* Clase para la sangría francesa de 1.27 cm */
+        .french-indent {
+            text-indent: -1.27cm;
+            padding-left: 1.27cm;
+        }
+        /* Para el bloque de más de 40 palabras, que no requiere sangría francesa, sino una indentación de bloque */
+        .block-indent {
+            margin-left: 1.27cm;
+        }
+        /* Estilos de gradiente para botones */
+        .btn-gradient {
+            background-image: linear-gradient(to right, #ffb347, #ff944d, #ff7a5c);
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 15px 0 rgba(255, 122, 92, 0.75);
+        }
+        .btn-gradient:hover {
+            background-position: 100% 0;
+            box-shadow: 0 8px 20px 0 rgba(255, 122, 92, 0.9);
+            transform: scale(1.02);
+        }
+        .btn-secondary {
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.1);
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        /* Estilos para el tooltip */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip-container .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: #fff;
             text-align: center;
+            border-radius: 6px;
+            padding: 8px 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-container .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800 p-4 sm:p-8">
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-10">
-        <h1 class="text-3xl sm:text-4xl font-bold text-center text-blue-800 mb-6">ReferencIA</h1>
-        <p class="text-center text-gray-600 mb-8">Generador de Citas y Referencias APA 7</p>
+    <!-- Contenedor principal de la aplicación -->
+    <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-4xl w-full">
 
-        <!-- Formulario principal de ReferencIA -->
-        <div id="app-container">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Tipo de Fuente -->
-                <div>
-                    <label for="source-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Fuente</label>
-                    <select id="source-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-                        <option value="">-- Seleccione una opción --</option>
-                        <option value="libro">Libro</option>
-                        <option value="capitulo-libro">Capítulo de Libro</option>
-                        <option value="articulo-cientifico">Artículo Científico</option>
-                        <option value="sitio-web">Sitio Web</option>
-                        <option value="informe-gubernamental">Informe Gubernamental</option>
-                        <option value="tesis">Tesis</option>
-                        <option value="ley">Ley</option>
-                        <option value="tratado-convencion">Tratado y Convención Internacional</option>
-                    </select>
-                </div>
-                <!-- Tipo de Cita -->
-                <div>
-                    <label for="citation-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Cita</label>
-                    <select id="citation-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-                        <option value="paraphrased">Parafraseada</option>
-                        <option value="textual">Textual</option>
-                    </select>
+        <!-- Título y descripción -->
+        <h1 class="text-4xl md:text-5xl font-extrabold text-center text-gray-800 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-400">
+            ReferencIA
+        </h1>
+        <p class="text-center text-gray-500 mb-8">
+            Genera citas bibliográficas en formato APA 7 de forma rápida y precisa.
+        </p>
+
+        <!-- Formulario principal para la entrada de datos -->
+        <div id="citation-form" class="space-y-6">
+
+            <!-- Selección del tipo de fuente -->
+            <div class="relative">
+                <label for="source-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de fuente</label>
+                <select id="source-type" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all duration-300">
+                    <option value="articulo-cientifico">Artículo científico</option>
+                    <option value="tesis">Tesis</option>
+                    <option value="libro">Libro</option>
+                    <option value="capitulo-libro">Capítulo de libro</option>
+                    <option value="informe-gubernamental">Informes gubernamentales</option>
+                    <option value="sentencia">Sentencia</option>
+                    <option value="ley">Ley</option>
+                    <option value="tratado">Tratados y convenciones internacionales</option>
+                    <option value="sitio-web">Sitio web</option>
+                    <option value="simposio">Simposios, conferencias y congresos</option>
+                </select>
+                <!-- Indicador de flecha para el select -->
+                <div class="absolute inset-y-0 right-0 top-6 flex items-center pr-3 pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3z" clip-rule="evenodd" />
+                    </svg>
                 </div>
             </div>
 
-            <!-- Contenedor para inputs dinámicos de la fuente -->
-            <div id="source-fields" class="space-y-6 mb-8"></div>
+            <!-- Contenedor de campos de entrada -->
+            <div id="input-fields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Campo para el número de autores (se mostrará en los tipos de fuente aplicables) -->
+                <div id="author-count-field" class="hidden md:col-span-2">
+                    <label for="author-count" class="block text-sm font-medium text-gray-700 mb-2">Número de autores</label>
+                    <input type="number" id="author-count" min="1" max="20" value="1" placeholder="Ej: 3" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Contenedor para los campos de autor dinámicos -->
+                <div id="dynamic-author-fields" class="md:col-span-2 space-y-4"></div>
+
+                <!-- Campos de autor para Sitio Web (Persona o Corporativo) -->
+                <div id="website-author-type-field" class="hidden md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de autor</label>
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="website-author-type" value="persona" checked class="form-radio text-orange-600 focus:ring-orange-500">
+                            <span class="ml-2 text-gray-700">Persona</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="website-author-type" value="corporativo" class="form-radio text-orange-600 focus:ring-orange-500">
+                            <span class="ml-2 text-gray-700">Corporativo</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="website-persona-authors-container" class="hidden md:col-span-2 space-y-4">
+                    <label for="website-persona-author-count" class="block text-sm font-medium text-gray-700 mb-2">Número de autores personales</label>
+                    <input type="number" id="website-persona-author-count" min="1" max="20" value="1" placeholder="Ej: 3" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                    <div id="website-persona-author-fields" class="space-y-4"></div>
+                </div>
+
+                <div id="website-corporate-author-field" class="hidden md:col-span-2">
+                    <label for="website-corporate-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre corporativo</label>
+                    <input type="text" id="website-corporate-name" placeholder="Ej: Organización Mundial de la Salud" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos comunes a todos los tipos de fuente que no son dinámicos -->
+                <div class="common-fields md:col-span-2">
+                    <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Año de publicación</label>
+                    <input type="text" id="year" placeholder="Ej: 2023" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="common-fields md:col-span-2">
+                    <label for="url" class="block text-sm font-medium text-gray-700 mb-2">URL</label>
+                    <input type="text" id="url" placeholder="Ej: https://ejemplo.com" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Artículo científico -->
+                <div class="articulo-cientifico-fields hidden md:col-span-2">
+                    <label for="article-title" class="block text-sm font-medium text-gray-700 mb-2">Título del artículo</label>
+                    <input type="text" id="article-title" placeholder="Ej: Avances en la investigación sobre IA" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="articulo-cientifico-fields hidden">
+                    <label for="journal-title" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la revista</label>
+                    <input type="text" id="journal-title" placeholder="Ej: Revista de Ciencias Tecnológicas" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="articulo-cientifico-fields hidden">
+                    <label for="volume" class="block text-sm font-medium text-gray-700 mb-2">Volumen</label>
+                    <input type="text" id="volume" placeholder="Ej: 15" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="articulo-cientifico-fields hidden">
+                    <label for="issue" class="block text-sm font-medium text-gray-700 mb-2">Número</label>
+                    <input type="text" id="issue" placeholder="Ej: (2)" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="articulo-cientifico-fields hidden">
+                    <label for="pages" class="block text-sm font-medium text-gray-700 mb-2">Páginas</label>
+                    <input type="text" id="pages" placeholder="Ej: 20-35" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Tesis -->
+                <div class="tesis-fields hidden md:col-span-2">
+                    <label for="thesis-title" class="block text-sm font-medium text-gray-700 mb-2">Título de la tesis</label>
+                    <input type="text" id="thesis-title" placeholder="Ej: Modelo de gestión para..." class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="tesis-fields hidden">
+                    <label for="thesis-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de tesis (Ej: pregrado, maestría, doctorado)</label>
+                    <input type="text" id="thesis-type" placeholder="Ej: maestría" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="tesis-fields hidden">
+                    <label for="institution" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la institución</label>
+                    <input type="text" id="institution" placeholder="Ej: Universidad Nacional Autónoma de México" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="tesis-fields hidden">
+                    <label for="database" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la base de datos (Opcional)</label>
+                    <input type="text" id="database" placeholder="Ej: ProQuest Dissertations & Theses" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Libro -->
+                <div class="libro-fields hidden md:col-span-2">
+                    <label for="book-title" class="block text-sm font-medium text-gray-700 mb-2">Título del libro</label>
+                    <input type="text" id="book-title" placeholder="Ej: El manual de APA" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="libro-fields hidden">
+                    <label for="book-edition" class="block text-sm font-medium text-gray-700 mb-2">Edición (Opcional)</label>
+                    <input type="text" id="book-edition" placeholder="Ej: 3a ed." class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="libro-fields hidden">
+                    <label for="publisher" class="block text-sm font-medium text-gray-700 mb-2">Editorial</label>
+                    <input type="text" id="publisher" placeholder="Ej: American Psychological Association" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                
+                <!-- Campos para Capítulo de Libro -->
+                <div class="capitulo-libro-fields hidden md:col-span-2">
+                    <label for="chapter-title" class="block text-sm font-medium text-gray-700 mb-2">Título del capítulo o la entrada</label>
+                    <input type="text" id="chapter-title" placeholder="Ej: Introducción a la estadística" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="capitulo-libro-fields hidden md:col-span-2">
+                    <label for="editor-count" class="block text-sm font-medium text-gray-700 mb-2">Número de editor(es)</label>
+                    <input type="number" id="editor-count" min="1" max="20" value="1" placeholder="Ej: 1" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div id="dynamic-editor-fields" class="capitulo-libro-fields hidden md:col-span-2 space-y-4"></div>
+                <div class="capitulo-libro-fields hidden">
+                    <label for="book-title-cl" class="block text-sm font-medium text-gray-700 mb-2">Título del libro</label>
+                    <input type="text" id="book-title-cl" placeholder="Ej: Manual de investigación" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="capitulo-libro-fields hidden">
+                    <label for="chapter-pages" class="block text-sm font-medium text-gray-700 mb-2">Páginas del capítulo</label>
+                    <input type="text" id="chapter-pages" placeholder="Ej: 15-30" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="capitulo-libro-fields hidden">
+                    <label for="publisher-cl" class="block text-sm font-medium text-gray-700 mb-2">Editorial</label>
+                    <input type="text" id="publisher-cl" placeholder="Ej: Penguin Random House" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Informes gubernamentales -->
+                <div class="informe-gubernamental-fields hidden md:col-span-2">
+                    <label for="org-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la organización</label>
+                    <input type="text" id="org-name" placeholder="Ej: Organización Mundial de la Salud" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="informe-gubernamental-fields hidden">
+                    <label for="report-title" class="block text-sm font-medium text-gray-700 mb-2">Título del informe</label>
+                    <input type="text" id="report-title" placeholder="Ej: Reporte Anual de Salud Global" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="informe-gubernamental-fields hidden">
+                    <label for="report-number" class="block text-sm font-medium text-gray-700 mb-2">Número de publicación (Opcional)</label>
+                    <input type="text" id="report-number" placeholder="Ej: No. 12" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Sentencia -->
+                <div class="sentencia-fields hidden md:col-span-2">
+                    <label for="sentence-title" class="block text-sm font-medium text-gray-700 mb-2">Título o nombre de la sentencia</label>
+                    <input type="text" id="sentence-title" placeholder="Ej: Caso Smith contra Johnson" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="sentencia-fields hidden">
+                    <label for="sentence-date" class="block text-sm font-medium text-gray-700 mb-2">Fecha de la sentencia (Ej: 2 de agosto de 2023)</label>
+                    <input type="text" id="sentence-date" placeholder="Ej: 2 de agosto de 2023" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="sentencia-fields hidden md:col-span-2">
+                    <label for="court-report" class="block text-sm font-medium text-gray-700 mb-2">Corte o reporte de publicación</label>
+                    <input type="text" id="court-report" placeholder="Ej: Corte Suprema de Justicia" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="sentencia-fields hidden md:col-span-2">
+                    <label for="magistrate" class="block text-sm font-medium text-gray-700 mb-2">Nombre del magistrado ponente (Opcional)</label>
+                    <input type="text" id="magistrate" placeholder="Ej: Nombre Apellido" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Ley -->
+                <div class="ley-fields hidden md:col-span-2">
+                    <label for="law-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la ley</label>
+                    <input type="text" id="law-name" placeholder="Ej: Ley Orgánica de Educación Intercultural" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="ley-fields hidden">
+                    <label for="law-date" class="block text-sm font-medium text-gray-700 mb-2">Fecha de publicación (Ej: 15 de marzo de 2011)</label>
+                    <input type="text" id="law-date" placeholder="Ej: 15 de marzo de 2011" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="ley-fields hidden">
+                    <label for="source" class="block text-sm font-medium text-gray-700 mb-2">Fuente de publicación</label>
+                    <input type="text" id="source" placeholder="Ej: Registro Oficial" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="ley-fields hidden md:col-span-2">
+                    <label for="section-article" class="block text-sm font-medium text-gray-700 mb-2">Número de sección o artículo (Opcional)</label>
+                    <input type="text" id="section-article" placeholder="Ej: Art. 48" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Tratados y convenciones internacionales -->
+                <div class="tratado-fields hidden md:col-span-2">
+                    <label for="treaty-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre del tratado o convención</label>
+                    <input type="text" id="treaty-name" placeholder="Ej: Tratado de Viena sobre el Derecho de los Tratados" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="tratado-fields hidden">
+                    <label for="treaty-date" class="block text-sm font-medium text-gray-700 mb-2">Fecha del tratado (Ej: 23 de mayo de 1969)</label>
+                    <input type="text" id="treaty-date" placeholder="Ej: 23 de mayo de 1969" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Sitio web -->
+                <div class="sitio-web-fields hidden md:col-span-2">
+                    <label for="page-title" class="block text-sm font-medium text-gray-700 mb-2">Título del artículo o página</label>
+                    <input type="text" id="page-title" placeholder="Ej: ¿Qué es el formato APA?" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="sitio-web-fields hidden md:col-span-2">
+                    <label for="site-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre del sitio web</label>
+                    <input type="text" id="site-name" placeholder="Ej: APA Style" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="sitio-web-fields hidden">
+                    <label for="website-day" class="block text-sm font-medium text-gray-700 mb-2">Día de publicación (Opcional)</label>
+                    <input type="text" id="website-day" placeholder="Ej: 15" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="sitio-web-fields hidden">
+                    <label for="website-month" class="block text-sm font-medium text-gray-700 mb-2">Mes de publicación (Opcional)</label>
+                    <input type="text" id="website-month" placeholder="Ej: enero" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+
+                <!-- Campos para Simposios, conferencias y congresos -->
+                <div class="simposio-fields hidden md:col-span-2">
+                    <label for="conference-title" class="block text-sm font-medium text-gray-700 mb-2">Título de la ponencia</label>
+                    <input type="text" id="conference-title" placeholder="Ej: La ciencia de la sostenibilidad" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="simposio-fields hidden">
+                    <label for="contribution-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de contribución</label>
+                    <input type="text" id="contribution-type" placeholder="Ej: presentación de cartel" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="simposio-fields hidden md:col-span-2">
+                    <label for="conference-name" class="block text-sm font-medium text-gray-700 mb-2">Título del simposio, conferencia o congreso</label>
+                    <input type="text" id="conference-name" placeholder="Ej: Conferencia Internacional de Energía Renovable" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="simposio-fields hidden">
+                    <label for="city" class="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                    <input type="text" id="city" placeholder="Ej: Quito" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="simposio-fields hidden">
+                    <label for="country" class="block text-sm font-medium text-gray-700 mb-2">País</label>
+                    <input type="text" id="country" placeholder="Ej: Ecuador" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="simposio-fields hidden">
+                    <label for="conference-day" class="block text-sm font-medium text-gray-700 mb-2">Día de la conferencia (Opcional)</label>
+                    <input type="text" id="conference-day" placeholder="Ej: 15" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+                <div class="simposio-fields hidden">
+                    <label for="conference-month" class="block text-sm font-medium text-gray-700 mb-2">Mes de la conferencia (Opcional)</label>
+                    <input type="text" id="conference-month" placeholder="Ej: enero" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
+            </div>
             
-            <!-- Contenedor para el texto de la cita (solo para citas textuales) -->
-            <div id="textual-fields" class="space-y-6 mb-8 hidden">
-                <div>
-                    <label for="textual-content" class="block text-sm font-medium text-gray-700 mb-2">Texto de la Cita Textual</label>
-                    <textarea id="textual-content" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200" placeholder="Inserta aquí el texto exacto de la cita..."></textarea>
-                    <p class="text-xs text-gray-500 mt-1">El formato se adaptará automáticamente según la longitud del texto.</p>
-                </div>
-                <div>
-                    <label for="textual-page" class="block text-sm font-medium text-gray-700 mb-2">Número de página (o rango) *</label>
-                    <input type="text" id="textual-page" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="citation-style" class="block text-sm font-medium text-gray-700 mb-2">Estilo de Cita *</label>
-                    <select id="citation-style" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-                        <option value="narrative">Narrativa</option>
-                        <option value="parenthetical">Parentética</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Contenedor para los autores del capítulo (principal) -->
-            <div id="chapter-author-fields" class="space-y-6 mb-8 hidden">
-                <h3 class="text-lg font-semibold text-gray-700">Autores del Capítulo</h3>
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="w-full sm:w-1/2">
-                        <label for="chapter-author-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Autor</label>
-                        <select id="chapter-author-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-                            <option value="persona">Persona</option>
-                            <option value="corporativo">Corporativo</option>
-                        </select>
-                    </div>
-                    <div id="chapter-persona-count-container" class="w-full sm:w-1/2">
-                        <label for="chapter-persona-count" class="block text-sm font-medium text-gray-700 mb-2">Número de Autores (Persona)</label>
-                        <input type="number" id="chapter-persona-count" min="1" value="1" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-                    </div>
-                </div>
-                <!-- Contenedor para los inputs de autor persona del capítulo -->
-                <div id="chapter-persona-author-container" class="space-y-4"></div>
-                <!-- Contenedor para el input de autor corporativo del capítulo -->
-                <div id="chapter-corporativo-author-container" class="hidden">
-                    <label for="chapter-corporativo-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Institución/Organización *</label>
-                    <input type="text" id="chapter-corporativo-name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            </div>
-
-            <!-- Contenedor para autores/editores del libro (aparece solo con capitulo-libro) -->
-            <div id="book-editor-fields" class="space-y-6 mb-8 hidden">
-                <h3 class="text-lg font-semibold text-gray-700">Autores o Editores del Libro</h3>
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="w-full sm:w-1/2">
-                        <label for="book-editor-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Autor</label>
-                        <select id="book-editor-type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-                            <option value="persona">Persona</option>
-                            <option value="corporativo">Corporativo</option>
-                        </select>
-                    </div>
-                    <div id="book-persona-count-container" class="w-full sm:w-1/2">
-                        <label for="book-persona-count" class="block text-sm font-medium text-gray-700 mb-2">Número de Editores (Persona)</label>
-                        <input type="number" id="book-persona-count" min="1" value="1" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-                    </div>
-                </div>
-                <!-- Contenedor para los inputs de editor persona del libro -->
-                <div id="book-persona-editor-container" class="space-y-4"></div>
-                <!-- Contenedor para el input de editor corporativo del libro -->
-                <div id="book-corporativo-editor-container" class="hidden">
-                    <label for="book-corporativo-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Institución/Organización *</label>
-                    <input type="text" id="book-corporativo-name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            </div>
-
-
-            <!-- Botón para generar -->
-            <div class="text-center">
-                <button id="generate-button" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 transform hover:scale-105">
-                    Generar Cita y Referencia
+            <!-- Botones de acción -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <button id="generate-button" class="w-full px-6 py-4 rounded-2xl text-white text-lg font-bold btn-gradient">
+                    Generar
+                </button>
+                <button id="clear-fields-button" class="w-full px-6 py-4 rounded-2xl bg-gray-300 text-gray-800 text-lg font-bold btn-secondary">
+                    Borrar Campos
                 </button>
             </div>
         </div>
-        
-        <!-- Contenedor de resultados -->
-        <div id="results-container" class="mt-10 p-6 bg-gray-50 rounded-lg border-2 border-gray-200 hidden">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-800">Resultados</h2>
-            <!-- Resultado de la Cita -->
+
+        <!-- Separador visual -->
+        <hr class="my-8 border-gray-300">
+
+        <!-- Sección para Citas en el Texto -->
+        <div class="space-y-6">
+            <h2 class="text-3xl font-bold text-gray-800 text-center bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-400">Citas en el Texto</h2>
+
+            <!-- Tipo de cita: Parentética vs. Narrativa -->
             <div>
-                <h3 class="text-xl font-medium text-gray-700 mb-2">Cita en el texto:</h3>
-                <div class="bg-white p-4 rounded-lg border border-gray-300 overflow-auto">
-                    <p id="citation-result" class="whitespace-pre-line"></p>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Estilo de cita
+                </label>
+                <div class="flex items-center space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="citation-style" value="parentetica" checked class="form-radio text-orange-600">
+                        <span class="ml-2 text-gray-700">Parentética</span>
+                        <div class="tooltip-container ml-1 text-gray-400 hover:text-orange-500">
+                            <span class="text-base leading-none">&quest;</span>
+                            <span class="tooltip-text">Se utiliza para dar énfasis a la obra citada. El autor y la fecha van dentro del paréntesis.</span>
+                        </div>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="citation-style" value="narrativa" class="form-radio text-orange-600">
+                        <span class="ml-2 text-gray-700">Narrativa</span>
+                        <div class="tooltip-container ml-1 text-gray-400 hover:text-orange-500">
+                            <span class="text-base leading-none">&quest;</span>
+                            <span class="tooltip-text">Se utiliza para dar énfasis al autor. El autor es parte de la oración y la fecha va entre paréntesis.</span>
+                        </div>
+                    </label>
                 </div>
             </div>
-            <!-- Resultado de la Referencia -->
-            <div class="mt-6">
-                <h3 class="text-xl font-medium text-gray-700 mb-2">Referencia completa:</h3>
-                <div class="bg-white p-4 rounded-lg border border-gray-300 overflow-auto">
-                    <p id="reference-result" class="whitespace-pre-line"></p>
+
+            <!-- Tipo de cita: Directa vs. Indirecta -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de cita</label>
+                <div class="flex items-center space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="citation-type" value="indirecta" checked class="form-radio text-orange-600">
+                        <span class="ml-2 text-gray-700">Indirecta</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="citation-type" value="directa" class="form-radio text-orange-600">
+                        <span class="ml-2 text-gray-700">Directa</span>
+                    </label>
                 </div>
             </div>
-            <!-- Botón para guardar la cita -->
-            <div class="mt-6 text-center">
-                <button id="save-button" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300 transform hover:scale-105">
-                    Guardar Cita
-                </button>
+
+            <!-- Campos para Cita Directa (inicialmente ocultos) -->
+            <div id="direct-citation-fields" class="hidden space-y-4">
+                <div>
+                    <label for="citation-text" class="block text-sm font-medium text-gray-700 mb-2">Texto de la cita</label>
+                    <textarea id="citation-text" rows="4" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"></textarea>
+                </div>
+                <div>
+                    <label for="page-number" class="block text-sm font-medium text-gray-700 mb-2">Número de página</label>
+                    <input type="text" id="page-number" placeholder="Ej: 25" class="w-full px-4 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400">
+                </div>
             </div>
         </div>
 
-        <!-- Contenedor de citas guardadas -->
-        <div id="saved-container" class="mt-10 p-6 bg-gray-50 rounded-lg border-2 border-gray-200 hidden">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-800">Citas Guardadas</h2>
-            <div id="saved-list" class="space-y-4">
-                <!-- Las citas guardadas se renderizarán aquí -->
+        <!-- Área de resultado de la cita en el texto -->
+        <div class="mt-8 relative">
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Cita en el texto</h3>
+            <div id="in-text-citation-container" class="bg-orange-50 border border-orange-200 p-6 rounded-2xl relative min-h-[6rem]">
+                <p id="in-text-citation-result" class="text-gray-800 break-words"></p>
+                <div id="in-text-message-box" class="hidden absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white bg-opacity-90 rounded-2xl">
+                    <p id="in-text-message-text" class="text-lg font-semibold text-green-600 animate-pulse"></p>
+                </div>
             </div>
+            <button id="copy-in-text-button" class="w-full px-6 py-3 mt-4 rounded-2xl bg-gray-200 text-gray-800 font-bold btn-secondary">
+                Copiar cita en el texto
+            </button>
         </div>
         
-        <!-- Contenedor de mensajes de estado -->
-        <div id="message-box" class="mt-6 p-4 rounded-lg border hidden">
-            <p id="message-text"></p>
+        <!-- Separador visual -->
+        <hr class="my-8 border-gray-300">
+
+        <!-- Área de resultado de la cita -->
+        <div class="mt-8 relative">
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Referencia bibliográfica</h3>
+            <div id="result-container" class="bg-orange-50 border border-orange-200 p-6 rounded-2xl relative">
+                <p id="citation-result" class="text-gray-800 break-words french-indent"></p>
+                <div id="message-box" class="hidden absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white bg-opacity-90 rounded-2xl">
+                    <p id="message-text" class="text-lg font-semibold text-green-600 animate-pulse"></p>
+                </div>
+            </div>
+            
+            <!-- Botón para copiar -->
+            <button id="copy-button" class="w-full px-6 py-3 mt-4 rounded-2xl bg-gray-200 text-gray-800 font-bold btn-secondary">
+                Copiar referencia
+            </button>
         </div>
-        
-        <!-- ID de usuario para colaboración (invisible) -->
-        <p id="user-id-display" class="text-sm text-gray-400 mt-4 text-center hidden">ID de Usuario: <span id="user-id-value"></span></p>
+
+        <!-- Historial de Citas y Referencias -->
+        <hr class="my-8 border-gray-300">
+        <div class="mt-8">
+            <h2 class="text-3xl font-bold text-gray-800 text-center bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-400 mb-4">Historial</h2>
+            <div id="history-container" class="space-y-4">
+                <!-- Las citas y referencias generadas se añadirán aquí -->
+            </div>
+            <button id="clear-history-button" class="w-full px-6 py-3 mt-4 rounded-2xl bg-red-500 text-white font-bold btn-secondary">
+                Eliminar todo el historial
+            </button>
+        </div>
+
     </div>
-    
-    <script type="module">
-        // Firebase Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <!-- Pie de página con el crédito -->
+    <div class="w-full max-w-4xl text-center text-gray-500 mt-8">
+        Producido por Ángel Ordoñez con GEMINI
+    </div>
 
-        // Initialize Firebase services
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        let userId;
+    <!-- Script de JavaScript para la lógica de la aplicación -->
+    <script>
+        // Espera a que el DOM esté completamente cargado antes de ejecutar el script
+        document.addEventListener('DOMContentLoaded', () => {
+            // Referencias a los elementos del DOM (Referencias bibliográficas)
+            const sourceTypeSelect = document.getElementById('source-type');
+            const authorCountInput = document.getElementById('author-count');
+            const dynamicAuthorFields = document.getElementById('dynamic-author-fields');
+            const generateButton = document.getElementById('generate-button');
+            const copyButton = document.getElementById('copy-button');
+            const citationResult = document.getElementById('citation-result');
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
 
-        // DOM elements
-        const sourceTypeSelect = document.getElementById('source-type');
-        const citationTypeSelect = document.getElementById('citation-type');
-        const sourceFieldsContainer = document.getElementById('source-fields');
-        const textualFieldsContainer = document.getElementById('textual-fields');
-        
-        // Elementos para el manejo de autores/editores
-        const chapterAuthorFieldsContainer = document.getElementById('chapter-author-fields');
-        const chapterAuthorTypeSelect = document.getElementById('chapter-author-type');
-        const chapterPersonaCountInput = document.getElementById('chapter-persona-count');
-        const chapterPersonaCountContainer = document.getElementById('chapter-persona-count-container');
-        const chapterPersonaAuthorContainer = document.getElementById('chapter-persona-author-container');
-        const chapterCorporativoAuthorContainer = document.getElementById('chapter-corporativo-author-container');
-        
-        const bookEditorFieldsContainer = document.getElementById('book-editor-fields');
-        const bookEditorTypeSelect = document.getElementById('book-editor-type');
-        const bookPersonaCountInput = document.getElementById('book-persona-count');
-        const bookPersonaCountContainer = document.getElementById('book-persona-count-container');
-        const bookPersonaEditorContainer = document.getElementById('book-persona-editor-container');
-        const bookCorporativoEditorContainer = document.getElementById('book-corporativo-editor-container');
-
-        const generateButton = document.getElementById('generate-button');
-        const saveButton = document.getElementById('save-button');
-        const resultsContainer = document.getElementById('results-container');
-        const citationResult = document.getElementById('citation-result');
-        const referenceResult = document.getElementById('reference-result');
-        const savedContainer = document.getElementById('saved-container');
-        const savedList = document.getElementById('saved-list');
-        const messageBox = document.getElementById('message-box');
-        const messageText = document.getElementById('message-text');
-
-        // Función para mostrar mensajes de estado
-        function showMessage(message, type = 'error') {
-            messageText.textContent = message;
-            messageBox.classList.remove('hidden');
-            if (type === 'error') {
-                messageBox.classList.remove('bg-green-100', 'text-green-700', 'border-green-300');
-                messageBox.classList.add('bg-red-100', 'text-red-700', 'border-red-300');
-            } else {
-                messageBox.classList.remove('bg-red-100', 'text-red-700', 'border-red-300');
-                messageBox.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
-            }
-        }
-        
-        // Define los campos para cada tipo de fuente
-        const sourceFields = {
-            'libro': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="libro-title" class="block text-sm font-medium text-gray-700 mb-2">Título del Libro *</label>
-                        <input type="text" id="libro-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="libro-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
-                        <input type="number" id="libro-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label for="libro-editorial" class="block text-sm font-medium text-gray-700 mb-2">Editorial *</label>
-                    <input type="text" id="libro-editorial" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="libro-edition" class="block text-sm font-medium text-gray-700 mb-2">Edición (opcional)</label>
-                    <input type="text" id="libro-edition" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="libro-url" class="block text-sm font-medium text-gray-700 mb-2">URL o DOI (opcional)</label>
-                    <input type="url" id="libro-url" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            `,
-            'capitulo-libro': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="capitulo-title" class="block text-sm font-medium text-gray-700 mb-2">Título del Capítulo *</label>
-                        <input type="text" id="capitulo-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="capitulo-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
-                        <input type="number" id="capitulo-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="capitulo-paginas" class="block text-sm font-medium text-gray-700 mb-2">Páginas del Capítulo (e.g., 100-150) *</label>
-                        <input type="text" id="capitulo-paginas" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="capitulo-editorial" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la editorial *</label>
-                        <input type="text" id="capitulo-editorial" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label for="capitulo-libro-title" class="block text-sm font-medium text-gray-700 mb-2">Nombre del Libro *</label>
-                    <input type="text" id="capitulo-libro-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="capitulo-url" class="block text-sm font-medium text-gray-700 mb-2">URL o DOI (opcional)</label>
-                    <input type="url" id="capitulo-url" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            `,
-            'articulo-cientifico': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="articulo-title" class="block text-sm font-medium text-gray-700 mb-2">Título del Artículo *</label>
-                        <input type="text" id="articulo-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="articulo-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
-                        <input type="number" id="articulo-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="journal-title" class="block text-sm font-medium text-gray-700 mb-2">Título de la Revista *</label>
-                        <input type="text" id="journal-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="journal-volume" class="block text-sm font-medium text-gray-700 mb-2">Volumen de la Revista *</label>
-                        <input type="text" id="journal-volume" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="journal-issue" class="block text-sm font-medium text-gray-700 mb-2">Número de la Revista</label>
-                        <input type="text" id="journal-issue" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="articulo-paginas" class="block text-sm font-medium text-gray-700 mb-2">Páginas del Artículo (e.g., 123-145)</label>
-                        <input type="text" id="articulo-paginas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label for="articulo-url" class="block text-sm font-medium text-gray-700 mb-2">URL o DOI (opcional)</label>
-                    <input type="url" id="articulo-url" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://doi.org/10.1037/..." />
-                </div>
-            `,
-            'sitio-web': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="web-title" class="block text-sm font-medium text-gray-700 mb-2">Título de la Página *</label>
-                        <input type="text" id="web-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="web-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
-                        <input type="number" id="web-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label for="web-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre del Sitio Web *</label>
-                    <input type="text" id="web-name" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="web-url" class="block text-sm font-medium text-gray-700 mb-2">URL del Sitio Web *</label>
-                    <input type="url" id="web-url" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            `,
-            'informe-gubernamental': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="informe-title" class="block text-sm font-medium text-gray-700 mb-2">Título del Informe *</label>
-                        <input type="text" id="informe-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="informe-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
-                        <input type="number" id="informe-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label for="informe-entidad" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Entidad Gubernamental (opcional)</label>
-                    <input type="text" id="informe-entidad" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="informe-number" class="block text-sm font-medium text-gray-700 mb-2">Número de la Publicación (opcional)</label>
-                    <input type="text" id="informe-number" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="informe-url" class="block text-sm font-medium text-gray-700 mb-2">URL del Informe (opcional)</label>
-                    <input type="url" id="informe-url" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            `,
-            'tesis': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="tesis-title" class="block text-sm font-medium text-gray-700 mb-2">Título de la Tesis *</label>
-                        <input type="text" id="tesis-title" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="tesis-year" class="block text-sm font-medium text-gray-700 mb-2">Año de Publicación *</label>
-                        <input type="number" id="tesis-year" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label for="tesis-institucion" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Institución *</label>
-                    <input type="text" id="tesis-institucion" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="tesis-type" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Tesis *</label>
-                    <input type="text" id="tesis-type" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Tesis de pregrado, maestría o doctoral">
-                </div>
-                <div>
-                    <label for="tesis-database" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Base de Datos (opcional)</label>
-                    <input type="text" id="tesis-database" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label for="tesis-url" class="block text-sm font-medium text-gray-700 mb-2">URL de la Tesis (opcional)</label>
-                    <input type="url" id="tesis-url" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            `,
-            'ley': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="ley-nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre Oficial de la Ley *</label>
-                        <input type="text" id="ley-nombre" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="ley-fecha" class="block text-sm font-medium text-gray-700 mb-2">Fecha (e.g., 20 de mayo de 1980) *</label>
-                        <input type="text" id="ley-fecha" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="ley-fuente" class="block text-sm font-medium text-gray-700 mb-2">Fuente *</label>
-                        <input type="text" id="ley-fuente" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="ley-seccion" class="block text-sm font-medium text-gray-700 mb-2">Número de Sección o Artículo (opcional)</label>
-                        <input type="text" id="ley-seccion" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label for="ley-url" class="block text-sm font-medium text-gray-700 mb-2">URL de la Ley (opcional)</label>
-                    <input type="url" id="ley-url" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            `,
-            'tratado-convencion': `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="tratado-nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre Oficial del Tratado/Convención *</label>
-                        <input type="text" id="tratado-nombre" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label for="tratado-fecha" class="block text-sm font-medium text-gray-700 mb-2">Fecha (opcional)</label>
-                        <input type="text" id="tratado-fecha" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 24 de abril de 1999">
-                    </div>
-                </div>
-                <div>
-                    <label for="tratado-url" class="block text-sm font-medium text-gray-700 mb-2">URL del Tratado/Convención *</label>
-                    <input type="url" id="tratado-url" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            `,
-        };
-
-        // Escuchadores de eventos
-        sourceTypeSelect.addEventListener('change', () => {
-            const type = sourceTypeSelect.value;
-            sourceFieldsContainer.innerHTML = type ? sourceFields[type] : '';
-            resultsContainer.classList.add('hidden');
-            showMessage("", "info"); // Clear messages
-
-            // Muestra u oculta los campos de autor/editor según el tipo de fuente
-            const isChapter = type === 'capitulo-libro';
-            chapterAuthorFieldsContainer.classList.toggle('hidden', !isChapter && type !== 'libro' && type !== 'articulo-cientifico' && type !== 'tesis' && type !== 'sitio-web' && type !== 'informe-gubernamental');
-            bookEditorFieldsContainer.classList.toggle('hidden', !isChapter);
-
-            // También oculta los campos de autor principales cuando se selecciona 'ley' o 'tratado-convencion'
-            const isLegal = type === 'ley' || type === 'tratado-convencion';
-            chapterAuthorFieldsContainer.classList.toggle('hidden', isLegal);
-
-            // Resetea los campos de autor cuando se cambia de tipo de fuente
-            updateChapterPersonaAuthorInputs(1);
-            updateBookEditorInputs(1);
-        });
-        
-        citationTypeSelect.addEventListener('change', () => {
-            textualFieldsContainer.classList.toggle('hidden', citationTypeSelect.value !== 'textual');
-        });
-
-        // Eventos para el manejo de autores de capítulo
-        chapterAuthorTypeSelect.addEventListener('change', () => {
-            const isPersona = chapterAuthorTypeSelect.value === 'persona';
-            chapterPersonaCountContainer.classList.toggle('hidden', !isPersona);
-            chapterPersonaAuthorContainer.classList.toggle('hidden', !isPersona);
-            chapterCorporativoAuthorContainer.classList.toggle('hidden', isPersona);
-            if (isPersona) {
-                updateChapterPersonaAuthorInputs(chapterPersonaCountInput.value);
-            }
-        });
-
-        chapterPersonaCountInput.addEventListener('input', () => {
-            updateChapterPersonaAuthorInputs(chapterPersonaCountInput.value);
-        });
-
-        // Eventos para el manejo de autores/editores de libro
-        bookEditorTypeSelect.addEventListener('change', () => {
-            const isPersona = bookEditorTypeSelect.value === 'persona';
-            bookPersonaCountContainer.classList.toggle('hidden', !isPersona);
-            bookPersonaEditorContainer.classList.toggle('hidden', !isPersona);
-            bookCorporativoEditorContainer.classList.toggle('hidden', isPersona);
-            if (isPersona) {
-                updateBookEditorInputs(bookPersonaCountInput.value);
-            }
-        });
-        
-        bookPersonaCountInput.addEventListener('input', () => {
-            updateBookEditorInputs(bookPersonaCountInput.value);
-        });
-
-        // Funciones para actualizar los inputs de autores persona
-        function updateChapterPersonaAuthorInputs(count) {
-            let html = '';
-            for (let i = 1; i <= count; i++) {
-                html += `
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="chapter-persona-apellido-${i}" class="block text-sm font-medium text-gray-700 mb-2">Apellido(s) Autor ${i} *</label>
-                            <input type="text" id="chapter-persona-apellido-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label for="chapter-persona-nombre-${i}" class="block text-sm font-medium text-gray-700 mb-2">Nombre(s) Autor ${i} (Iniciales) *</label>
-                            <input type="text" id="chapter-persona-nombre-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                `;
-            }
-            chapterPersonaAuthorContainer.innerHTML = html;
-        }
-
-        // Funciones para actualizar los inputs de autores/editores de libro
-        function updateBookEditorInputs(count) {
-            let html = '';
-            for (let i = 1; i <= count; i++) {
-                html += `
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="book-persona-apellido-${i}" class="block text-sm font-medium text-gray-700 mb-2">Apellido(s) Editor ${i} *</label>
-                            <input type="text" id="book-persona-apellido-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label for="book-persona-nombre-${i}" class="block text-sm font-medium text-gray-700 mb-2">Nombre(s) Editor ${i} (Iniciales) *</label>
-                            <input type="text" id="book-persona-nombre-${i}" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                `;
-            }
-            bookPersonaEditorContainer.innerHTML = html;
-        }
-
-        // Lógica principal de generación
-        generateButton.addEventListener('click', () => {
-            try {
-                // Validación de campos
-                const sourceType = sourceTypeSelect.value;
-                const citationType = citationTypeSelect.value;
-
-                if (!sourceType) {
-                    throw new Error("Por favor, seleccione un tipo de fuente.");
-                }
-
-                if (citationType === 'textual' && !document.getElementById('textual-content').value.trim()) {
-                    throw new Error("Por favor, ingrese el texto para la cita textual.");
-                }
-
-                if (citationType === 'textual' && !document.getElementById('textual-page').value.trim()) {
-                    throw new Error("Por favor, ingrese el número de página para la cita textual.");
-                }
-                
-                let authors = [];
-                let bookEditors = [];
-
-                if (sourceType === 'capitulo-libro') {
-                    authors = getAuthorData('chapter');
-                    bookEditors = getAuthorData('book-editor');
-                    if (authors.length === 0) {
-                        throw new Error("Por favor, complete los datos de los autores del capítulo.");
-                    }
-                    if (bookEditors.length === 0) {
-                        throw new Error("Por favor, complete los datos de los autores o editores del libro.");
-                    }
-                } else {
-                    authors = getAuthorData('main');
-                    if (authors.length === 0) {
-                        throw new Error("Por favor, complete los datos de los autores.");
-                    }
-                }
-
-                // Obtener datos específicos de la fuente
-                let data = {};
-                const requiredFields = {
-                    'libro': ['libro-title', 'libro-year', 'libro-editorial'],
-                    'capitulo-libro': ['capitulo-title', 'capitulo-year', 'capitulo-libro-title', 'capitulo-paginas', 'capitulo-editorial'],
-                    'articulo-cientifico': ['articulo-title', 'journal-title', 'articulo-year', 'journal-volume'],
-                    'sitio-web': ['web-title', 'web-year', 'web-url', 'web-name'],
-                    'informe-gubernamental': ['informe-title', 'informe-year'],
-                    'tesis': ['tesis-title', 'tesis-year', 'tesis-institucion', 'tesis-type'],
-                    'ley': ['ley-nombre', 'ley-fecha', 'ley-fuente'],
-                    'tratado-convencion': ['tratado-nombre', 'tratado-url']
-                };
-
-                const currentRequiredFields = requiredFields[sourceType];
-                if (currentRequiredFields) {
-                    currentRequiredFields.forEach(id => {
-                        const input = document.getElementById(id);
-                        if (!input || !input.value.trim()) {
-                            throw new Error("Por favor, complete todos los campos requeridos.");
-                        }
-                        data[id.replace(/-/g, '_')] = input.value.trim();
-                    });
-                }
-                
-                // Obtener campos opcionales
-                const optionalFields = {
-                    'libro': ['libro-edition', 'libro-url'],
-                    'capitulo-libro': ['capitulo-url'],
-                    'articulo-cientifico': ['journal-issue', 'articulo-paginas', 'articulo-url'],
-                    'informe-gubernamental': ['informe-entidad', 'informe-number', 'informe-url'],
-                    'tesis': ['tesis-database', 'tesis-url'],
-                    'ley': ['ley-seccion', 'ley-url'],
-                    'tratado-convencion': ['tratado-fecha']
-                };
-
-                if (optionalFields[sourceType]) {
-                    optionalFields[sourceType].forEach(id => {
-                        const input = document.getElementById(id);
-                        if (input && input.value.trim()) {
-                            data[id.replace(/-/g, '_')] = input.value.trim();
-                        }
-                    });
-                }
-                
-                // Generar los resultados
-                const citation = generateCitation(authors, data);
-                const reference = generateReference(sourceType, authors, bookEditors, data);
-
-                citationResult.innerHTML = citation;
-                referenceResult.innerHTML = reference;
-                
-                resultsContainer.classList.remove('hidden');
-                showMessage("", "info"); // Clear messages
-
-            } catch (e) {
-                showMessage(e.message, 'error');
-                resultsContainer.classList.add('hidden');
-            }
-        });
-
-        // Event listener para el botón de guardar
-        saveButton.addEventListener('click', async () => {
-            const citationText = citationResult.innerHTML.trim();
-            const referenceText = referenceResult.innerHTML.trim();
-
-            if (!citationText || !referenceText) {
-                showMessage('No hay cita ni referencia para guardar.', 'error');
-                return;
-            }
-
-            try {
-                const sourceType = sourceTypeSelect.value;
-                const chapterAuthors = getAuthorData('chapter');
-                const bookEditors = getAuthorData('book-editor');
-                const mainAuthors = getAuthorData('main');
-                const authors = sourceType === 'capitulo-libro' ? chapterAuthors : mainAuthors;
-                
-                const authorType = sourceType === 'capitulo-libro' ? chapterAuthorTypeSelect.value : (sourceType === 'libro' || sourceType === 'articulo-cientifico' || sourceType === 'tesis' || sourceType === 'sitio-web' || sourceType === 'informe-gubernamental' ? 'persona' : 'corporativo');
-                
-                let primaryAuthor;
-                if (authors.length > 0) {
-                    primaryAuthor = authorType === 'persona' ? authors[0].apellido : authors[0].name;
-                } else if (sourceType === 'ley' || sourceType === 'tratado-convencion') {
-                    primaryAuthor = document.getElementById(`${sourceType}-nombre`).value.trim();
-                } else {
-                    primaryAuthor = 'Anónimo';
-                }
-
-                const yearInputId = `${sourceType.split('-')[0]}-year`;
-                const year = document.getElementById(yearInputId) ? document.getElementById(yearInputId).value.trim() : null;
-
-                if (!primaryAuthor || !year) {
-                    throw new Error("No se pudo obtener la información de autor o año para guardar.");
-                }
-
-                // 1. Buscamos citas existentes del mismo autor y año
-                const userCitationsRef = collection(db, `artifacts/${appId}/users/${userId}/saved_citations`);
-                const q = query(userCitationsRef);
-                const querySnapshot = await getDocs(q);
-                
-                const existingCitations = [];
-                querySnapshot.forEach(docSnapshot => {
-                    const data = docSnapshot.data();
-                    if (data.primaryAuthor === primaryAuthor && data.year === year) {
-                        existingCitations.push({ id: docSnapshot.id, data: data });
-                    }
-                });
-
-                // 2. Preparamos el array de todas las citas relevantes, incluida la nueva
-                const allCitations = [
-                    ...existingCitations,
-                    {
-                        data: {
-                            citation: citationText,
-                            reference: referenceText,
-                            timestamp: new Date(),
-                            primaryAuthor: primaryAuthor,
-                            year: year,
-                            sourceType: sourceTypeSelect.value,
-                            citationType: citationTypeSelect.value,
-                            sourceData: JSON.stringify(getFormData()),
-                            authorsData: JSON.stringify(authors),
-                            bookEditorsData: JSON.stringify(bookEditors),
-                        }
-                    }
-                ];
-
-                // 3. Ordenamos las citas por fecha de creación para asignar las letras en orden
-                allCitations.sort((a, b) => (a.data.timestamp instanceof Date ? a.data.timestamp : a.data.timestamp.toDate()) - (b.data.timestamp instanceof Date ? b.data.timestamp : b.data.timestamp.toDate()));
-                
-                // 4. Creamos un batch para realizar todas las escrituras y actualizaciones de manera atómica
-                const batch = writeBatch(db);
-                
-                const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-                
-                // 5. Iteramos sobre las citas y asignamos las letras, actualizando las existentes y añadiendo la nueva
-                for (let i = 0; i < allCitations.length; i++) {
-                    const item = allCitations[i];
-                    const letter = allCitations.length > 1 ? letters[i] : '';
-                    
-                    const updatedCitation = generateCitation(JSON.parse(item.data.authorsData), JSON.parse(item.data.sourceData), letter);
-                    const updatedReference = generateReference(item.data.sourceType, JSON.parse(item.data.authorsData), JSON.parse(item.data.bookEditorsData), JSON.parse(item.data.sourceData), letter);
-                    
-                    if (item.id) { // Es una cita existente, la actualizamos
-                        const docRef = doc(userCitationsRef, item.id);
-                        batch.update(docRef, {
-                            citation: updatedCitation,
-                            reference: updatedReference,
-                            letter: letter
-                        });
-                    } else { // Es la nueva cita, la añadimos
-                        const newDocRef = doc(userCitationsRef);
-                        batch.set(newDocRef, {
-                            ...item.data,
-                            citation: updatedCitation,
-                            reference: updatedReference,
-                            letter: letter
-                        });
-                    }
-                }
-                
-                // 6. Ejecutamos el batch de escrituras
-                await batch.commit();
-                showMessage('¡Cita guardada y actualizada correctamente!', 'success');
-
-            } catch (e) {
-                showMessage(`Error al guardar la cita: ${e.message}`, 'error');
-                console.error("Error al guardar la cita: ", e);
-            }
-        });
-
-        // Función para obtener los datos de los autores de forma dinámica
-        function getAuthorData(type) {
-            let authors = [];
-            let authorTypeSelect, personaCountInput;
-            let personaAuthorContainer, corporativoAuthorContainer;
-            let personaInputPrefix, corporativoInputId;
-
-            if (type === 'chapter') {
-                authorTypeSelect = chapterAuthorTypeSelect;
-                personaCountInput = chapterPersonaCountInput;
-                personaAuthorContainer = chapterPersonaAuthorContainer;
-                corporativoAuthorContainer = chapterCorporativoAuthorContainer;
-                personaInputPrefix = 'chapter-persona-';
-                corporativoInputId = 'chapter-corporativo-name';
-            } else if (type === 'book-editor') {
-                authorTypeSelect = bookEditorTypeSelect;
-                personaCountInput = bookPersonaCountInput;
-                personaAuthorContainer = bookPersonaEditorContainer;
-                corporativoAuthorContainer = bookCorporativoEditorContainer;
-                personaInputPrefix = 'book-persona-';
-                corporativoInputId = 'book-corporativo-name';
-            } else { // 'main'
-                authorTypeSelect = document.getElementById('author-type');
-                personaCountInput = document.getElementById('persona-count');
-                personaAuthorContainer = document.getElementById('persona-author-container');
-                corporativoAuthorContainer = document.getElementById('corporativo-author-container');
-                personaInputPrefix = 'persona-';
-                corporativoInputId = 'corporativo-name';
-            }
+            const websiteAuthorTypeField = document.getElementById('website-author-type-field');
+            const websiteAuthorTypeRadios = document.querySelectorAll('input[name="website-author-type"]');
+            const websitePersonaAuthorsContainer = document.getElementById('website-persona-authors-container');
+            const websitePersonaAuthorCountInput = document.getElementById('website-persona-author-count');
+            const websitePersonaAuthorFields = document.getElementById('website-persona-author-fields');
+            const websiteCorporateAuthorField = document.getElementById('website-corporate-author-field');
+            const commonYearInput = document.getElementById('year');
+            const commonUrlInput = document.getElementById('url');
             
-            if (!authorTypeSelect) return authors;
-            
-            const authorType = authorTypeSelect.value;
-            
-            if (authorType === 'persona') {
-                const count = personaCountInput ? personaCountInput.value : 1;
-                for (let i = 1; i <= count; i++) {
-                    const apellido = document.getElementById(`${personaInputPrefix}apellido-${i}`)?.value?.trim();
-                    const nombre = document.getElementById(`${personaInputPrefix}nombre-${i}`)?.value?.trim();
-                    if (apellido && nombre) {
-                        authors.push({ apellido, nombre });
-                    }
-                }
-            } else { // Corporativo
-                const corporativoName = document.getElementById(corporativoInputId)?.value?.trim();
-                if (corporativoName) {
-                    authors.push({ name: corporativoName });
-                }
-            }
-            return authors;
-        }
+            // Referencias a los elementos del DOM (Citas en el texto)
+            const citationStyleRadios = document.querySelectorAll('input[name="citation-style"]');
+            const citationTypeRadios = document.querySelectorAll('input[name="citation-type"]');
+            const directCitationFields = document.getElementById('direct-citation-fields');
+            const copyInTextButton = document.getElementById('copy-in-text-button');
+            const inTextCitationResult = document.getElementById('in-text-citation-result');
+            const inTextMessageBox = document.getElementById('in-text-message-box');
+            const inTextMessageText = document.getElementById('in-text-message-text');
+            const citationTextInput = document.getElementById('citation-text');
+            const pageNumberInput = document.getElementById('page-number');
 
-        // Función para obtener todos los datos de los formularios
-        function getFormData() {
-            const sourceType = sourceTypeSelect.value;
-            let data = {};
-            const allFields = {
-                'libro': ['libro-title', 'libro-year', 'libro-editorial', 'libro-edition', 'libro-url'],
-                'capitulo-libro': ['capitulo-title', 'capitulo-year', 'capitulo-libro-title', 'capitulo-paginas', 'capitulo-editorial', 'capitulo-url'],
-                'articulo-cientifico': ['articulo-title', 'journal-title', 'articulo-year', 'journal-volume', 'journal-issue', 'articulo-paginas', 'articulo-url'],
-                'sitio-web': ['web-title', 'web-year', 'web-url', 'web-name'],
-                'informe-gubernamental': ['informe-title', 'informe-year', 'informe-entidad', 'informe-number', 'informe-url'],
-                'tesis': ['tesis-title', 'tesis-year', 'tesis-institucion', 'tesis-type', 'tesis-database', 'tesis-url'],
-                'ley': ['ley-nombre', 'ley-fecha', 'ley-fuente', 'ley-seccion', 'ley-url'],
-                'tratado-convencion': ['tratado-nombre', 'tratado-fecha', 'tratado-url']
+            // Referencias a los nuevos elementos del DOM para el historial
+            const historyContainer = document.getElementById('history-container');
+            const clearHistoryButton = document.getElementById('clear-history-button');
+            const clearFieldsButton = document.getElementById('clear-fields-button'); // Nuevo botón
+
+            // Referencias para editores de Capítulo de Libro
+            const editorCountInput = document.getElementById('editor-count');
+            const dynamicEditorFields = document.getElementById('dynamic-editor-fields');
+
+            // Función para obtener las iniciales de un nombre
+            const getInitials = (name) => {
+                if (!name) return '';
+                // Divide el nombre por espacios, toma la primera letra de cada parte, la convierte a mayúscula y añade un punto.
+                // No añade un punto final a la cadena completa, solo a cada inicial.
+                return name.split(' ').map(part => part.charAt(0).toUpperCase() + '.').join('');
             };
 
-            const fields = allFields[sourceType];
-            if (fields) {
-                fields.forEach(id => {
-                    const input = document.getElementById(id);
-                    if (input && input.value.trim()) {
-                        data[id.replace(/-/g, '_')] = input.value.trim();
-                    }
-                });
-            }
-            return data;
-        }
-
-        // Función para renderizar las citas guardadas
-        const renderSavedCitations = (docs) => {
-            savedList.innerHTML = ''; // Limpiar la lista
-            if (docs.length === 0) {
-                savedList.innerHTML = '<p class="text-gray-500 text-center">No hay citas guardadas aún. ¡Genera y guarda la primera!</p>';
-                savedContainer.classList.remove('hidden');
-                return;
-            }
-
-            docs.forEach(docSnapshot => {
-                const docData = docSnapshot.data();
-                const docId = docSnapshot.id;
-                
-                const listItem = document.createElement('div');
-                listItem.className = 'saved-item';
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'saved-item-text';
-                contentDiv.innerHTML = `
-                    <p class="font-semibold text-lg mb-1">${docData.citation}</p>
-                    <p class="text-sm text-gray-600">${docData.reference}</p>
-                `;
-                
-                const deleteButton = document.createElement('button');
-                deleteButton.className = 'px-4 py-2 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 transition duration-200';
-                deleteButton.textContent = 'Eliminar';
-                deleteButton.onclick = async () => {
-                    const modal = document.createElement('div');
-                    modal.className = 'modal';
-                    modal.innerHTML = `
-                        <div class="modal-content p-6 rounded-lg shadow-xl text-center">
-                            <p class="mb-4 text-gray-800">¿Estás seguro de que quieres eliminar esta cita?</p>
-                            <div class="flex justify-center gap-4">
-                                <button id="modal-confirm" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200">Sí, eliminar</button>
-                                <button id="modal-cancel" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition duration-200">Cancelar</button>
+            // Función para renderizar los campos de autor dinámicamente
+            const renderAuthorFields = (container, count, prefix = 'author') => {
+                container.innerHTML = ''; // Limpia los campos existentes
+                for (let i = 1; i <= count; i++) {
+                    const fieldHtml = `
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="text-sm font-bold text-gray-700 mb-2">${prefix === 'author' ? 'Autor' : 'Editor'} ${i}</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="${prefix}-apellido-${i}" class="block text-xs font-medium text-gray-500 mb-1">Apellido</label>
+                                    <input type="text" id="${prefix}-apellido-${i}" class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
+                                <div>
+                                    <label for="${prefix}-nombre-${i}" class="block text-xs font-medium text-gray-500 mb-1">Nombre (completo o iniciales)</label>
+                                    <input type="text" id="${prefix}-nombre-${i}" placeholder="Ej: Juan P. o J. P." class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
                             </div>
                         </div>
                     `;
-                    document.body.appendChild(modal);
-
-                    document.getElementById('modal-confirm').onclick = async () => {
-                        try {
-                            const docRef = doc(db, `artifacts/${appId}/users/${userId}/saved_citations`, docId);
-                            await deleteDoc(docRef);
-                            showMessage('Cita eliminada.', 'success');
-                            modal.remove();
-                        } catch (e) {
-                            showMessage(`Error al eliminar la cita: ${e.message}`, 'error');
-                            console.error("Error al eliminar la cita: ", e);
-                            modal.remove();
-                        }
-                    };
-
-                    document.getElementById('modal-cancel').onclick = () => {
-                        modal.remove();
-                    };
-                };
-
-                listItem.appendChild(contentDiv);
-                listItem.appendChild(deleteButton);
-                savedList.appendChild(listItem);
-            });
-            savedContainer.classList.remove('hidden');
-        };
-
-        // Escucha en tiempo real los cambios en las citas guardadas
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                userId = user.uid;
-                // Muestra el ID de usuario
-                document.getElementById('user-id-value').textContent = userId;
-                document.getElementById('user-id-display').classList.remove('hidden');
+                    container.insertAdjacentHTML('beforeend', fieldHtml);
+                }
+            };
+            
+            // Función para formatear la cadena de autores para la referencia (siempre con iniciales)
+            const formatAuthors = (authors) => {
+                if (authors.length === 0) return '';
                 
-                const userCitationsRef = collection(db, `artifacts/${appId}/users/${userId}/saved_citations`);
-                onSnapshot(userCitationsRef, (querySnapshot) => {
-                    const citations = [];
-                    querySnapshot.forEach((doc) => {
-                        citations.push(doc);
-                    });
-                    renderSavedCitations(citations);
-                });
-            } else {
-                // Si el usuario no está autenticado, no se muestra la lista de guardado
-                savedContainer.classList.add('hidden');
-            }
-        });
-
-        // Lógica de autenticación inicial
-        async function authenticate() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
+                const formattedList = authors.map(a => {
+                    const apellido = a.apellido.trim();
+                    const nombreIniciales = getInitials(a.nombre.trim());
+                    if (!apellido && !nombreIniciales) return '';
+                    if (apellido && nombreIniciales) return `${apellido}, ${nombreIniciales}`;
+                    return apellido;
+                }).filter(a => a);
+                
+                if (formattedList.length <= 2) {
+                    return formattedList.join(' y ');
                 } else {
-                    await signInAnonymously(auth);
+                    const lastAuthor = formattedList.pop();
+                    return `${formattedList.join(', ')}, y ${lastAuthor}`;
                 }
-            } catch (error) {
-                console.error("Firebase Auth Error:", error);
-            }
-        }
-        authenticate();
+            };
 
-        // Función para formatear una lista de autores/editores
-        function formatAuthors(authors) {
-            if (authors.length === 0) return '';
-            
-            const isCorporate = authors[0].name !== undefined;
+            // Función para formatear la cadena de editores para la referencia (siempre con iniciales)
+            const formatEditors = (editors) => {
+                if (editors.length === 0) return '';
 
-            if (isCorporate) {
-                return authors[0].name;
-            }
+                const formattedList = editors.map(e => {
+                    const apellido = e.apellido.trim();
+                    const nombreIniciales = getInitials(e.nombre.trim());
+                    if (!apellido && !nombreIniciales) return '';
+                    if (apellido && nombreIniciales) return `${nombreIniciales} ${apellido}`;
+                    return apellido;
+                }).filter(e => e);
+
+                if (formattedList.length <= 2) {
+                    return formattedList.join(' y ');
+                } else {
+                    const lastEditor = formattedList.pop();
+                    return `${formattedList.join(', ')}, y ${lastEditor}`;
+                }
+            };
             
-            const authorParts = authors.map(a => {
-                const iniciales = a.nombre.split(' ').map(n => n[0].toUpperCase() + '.').join(' ');
-                return `${a.apellido}, ${iniciales}`;
+            // Obtiene la cadena de autores para las citas en el texto
+            const getInTextAuthors = (authors) => {
+                if (authors.length === 0) return '';
+                const apellidos = authors.map(a => a.apellido).filter(a => a);
+                if (apellidos.length === 1) {
+                    return apellidos[0];
+                } else if (apellidos.length === 2) {
+                    return `${apellidos[0]} y ${apellidos[1]}`;
+                } else {
+                    return `${apellidos[0]} et al.`;
+                }
+            };
+
+            // Muestra u oculta los campos de entrada según el tipo de fuente seleccionado
+            const updateInputFields = () => {
+                const selectedType = sourceTypeSelect.value;
+                document.querySelectorAll('div[class*="-fields"]').forEach(field => {
+                    field.classList.add('hidden');
+                });
+                document.querySelectorAll(`.${selectedType}-fields`).forEach(field => {
+                    field.classList.remove('hidden');
+                });
+                
+                // Muestra campos comunes si son aplicables
+                if (selectedType !== 'sentencia' && selectedType !== 'ley' && selectedType !== 'tratado' && selectedType !== 'informe-gubernamental') {
+                     commonYearInput.closest('.common-fields').classList.remove('hidden');
+                } else {
+                     commonYearInput.closest('.common-fields').classList.add('hidden');
+                }
+                
+                if (selectedType !== 'tratado') {
+                    commonUrlInput.closest('.common-fields').classList.remove('hidden');
+                } else {
+                    commonUrlInput.closest('.common-fields').classList.add('hidden');
+                }
+
+                // Lógica específica para los tipos de fuente con autores dinámicos
+                const dynamicAuthorTypes = ['articulo-cientifico', 'tesis', 'libro', 'capitulo-libro', 'simposio'];
+                if (dynamicAuthorTypes.includes(selectedType)) {
+                    document.getElementById('author-count-field').classList.remove('hidden');
+                    dynamicAuthorFields.classList.remove('hidden');
+                    renderAuthorFields(dynamicAuthorFields, authorCountInput.value, 'author');
+                } else {
+                    document.getElementById('author-count-field').classList.add('hidden');
+                    dynamicAuthorFields.classList.add('hidden');
+                }
+
+                // Lógica específica para el tipo de fuente 'Capítulo de Libro' (editores)
+                if (selectedType === 'capitulo-libro') {
+                    editorCountInput.closest('.capitulo-libro-fields').classList.remove('hidden');
+                    dynamicEditorFields.classList.remove('hidden');
+                    renderAuthorFields(dynamicEditorFields, editorCountInput.value, 'editor');
+                } else {
+                    editorCountInput.closest('.capitulo-libro-fields').classList.add('hidden');
+                    dynamicEditorFields.classList.add('hidden');
+                }
+
+                // Lógica específica para el tipo de fuente 'Sitio web'
+                if (selectedType === 'sitio-web') {
+                    websiteAuthorTypeField.classList.remove('hidden');
+                    const selectedAuthorType = document.querySelector('input[name="website-author-type"]:checked').value;
+                    if (selectedAuthorType === 'persona') {
+                        websitePersonaAuthorsContainer.classList.remove('hidden');
+                        websiteCorporateAuthorField.classList.add('hidden');
+                        renderAuthorFields(websitePersonaAuthorFields, websitePersonaAuthorCountInput.value, 'website-persona-author');
+                    } else {
+                        websitePersonaAuthorsContainer.classList.add('hidden');
+                        websiteCorporateAuthorField.classList.remove('hidden');
+                    }
+                } else {
+                    websiteAuthorTypeField.classList.add('hidden');
+                    websitePersonaAuthorsContainer.classList.add('hidden');
+                    websiteCorporateAuthorField.classList.add('hidden');
+                }
+            };
+            
+            // Manejadores de eventos para los cambios en referencias bibliográficas
+            sourceTypeSelect.addEventListener('change', updateInputFields);
+            authorCountInput.addEventListener('input', () => {
+                const count = parseInt(authorCountInput.value);
+                if (count > 0) {
+                    renderAuthorFields(dynamicAuthorFields, count, 'author');
+                }
             });
 
-            if (authorParts.length === 1) {
-                return authorParts[0];
-            } else if (authorParts.length === 2) {
-                return `${authorParts[0]} y ${authorParts[1]}`;
-            } else if (authorParts.length > 20) {
-                return `${authorParts.slice(0, 19).join(', ')}, ... , ${authorParts[authorParts.length - 1]}`;
-            } else { // 3-20 autores
-                const lastAuthor = authorParts.pop();
-                return `${authorParts.join(', ')}, y ${lastAuthor}`;
-            }
-        }
+            editorCountInput.addEventListener('input', () => {
+                const count = parseInt(editorCountInput.value);
+                if (count > 0) {
+                    renderAuthorFields(dynamicEditorFields, count, 'editor');
+                }
+            });
 
-        // Función para generar la cita en el texto
-        function generateCitation(authors, data, letter = '') {
-            const citationType = citationTypeSelect.value;
-            const year = data.libro_year || data.capitulo_year || data.articulo_year || data.web_year || data.informe_year || data.tesis_year || new Date().getFullYear();
-            const yearWithLetter = `${year}${letter}`;
-            
-            let authorString = '';
-            const isCorporate = authors.length > 0 && authors[0].name;
+            websiteAuthorTypeRadios.forEach(radio => {
+                radio.addEventListener('change', updateInputFields);
+            });
+            websitePersonaAuthorCountInput.addEventListener('input', () => {
+                const count = parseInt(websitePersonaAuthorCountInput.value);
+                if (count > 0) {
+                    renderAuthorFields(websitePersonaAuthorFields, count, 'website-persona-author');
+                }
+            });
 
-            if (isCorporate) {
-                authorString = authors[0].name ? authors[0].name : 'Organización Desconocida';
-            } else {
-                if (authors.length > 2) {
-                    authorString = authors[0].apellido + ' et al.';
-                } else if (authors.length === 2) {
-                    authorString = `${authors[0].apellido} y ${authors[1].apellido}`;
+            // Lógica para los campos de citas en el texto
+            const toggleDirectFields = () => {
+                if (document.querySelector('input[name="citation-type"]:checked').value === 'directa') {
+                    directCitationFields.classList.remove('hidden');
                 } else {
-                    authorString = authors[0].apellido;
+                    directCitationFields.classList.add('hidden');
                 }
-            }
+            };
             
-            if (citationType === 'paraphrased') {
-                return `(${authorString}, ${yearWithLetter})`;
-            }
+            // Manejador de evento para los cambios en el tipo de cita
+            citationTypeRadios.forEach(radio => radio.addEventListener('change', toggleDirectFields));
 
-            // Lógica para citas textuales
-            const textualContent = document.getElementById('textual-content').value.trim();
-            const citationStyle = document.getElementById('citation-style').value;
-            const page = document.getElementById('textual-page').value.trim();
-            const wordCount = textualContent.split(/\s+/).filter(Boolean).length;
+            // Función para limpiar todos los campos del formulario
+            const clearAllFormFields = () => {
+                // Limpiar campos de texto e inputs numéricos
+                document.querySelectorAll('#citation-form input[type="text"], #citation-form input[type="number"], #citation-form textarea').forEach(input => {
+                    input.value = '';
+                });
 
-            if (wordCount < 40) {
-                if (citationStyle === 'narrative') {
-                    return `${authorString} (${yearWithLetter}) afirma, “${textualContent}” (p. ${page}).`;
-                } else { // Parentética
-                    return `“${textualContent}” (${authorString}, ${yearWithLetter}, p. ${page}).`;
+                // Restablecer selects a la primera opción
+                sourceTypeSelect.value = sourceTypeSelect.options[0].value;
+                authorCountInput.value = 1;
+                editorCountInput.value = 1;
+                websitePersonaAuthorCountInput.value = 1;
+
+                // Restablecer radio buttons a la opción por defecto
+                document.querySelector('input[name="website-author-type"][value="persona"]').checked = true;
+                document.querySelector('input[name="citation-style"][value="parentetica"]').checked = true;
+                document.querySelector('input[name="citation-type"][value="indirecta"]').checked = true;
+
+                // Limpiar campos dinámicos
+                dynamicAuthorFields.innerHTML = '';
+                websitePersonaAuthorFields.innerHTML = '';
+                dynamicEditorFields.innerHTML = '';
+                
+                // Asegurarse de que los campos ocultos vuelvan a su estado inicial y se rendericen los campos por defecto
+                updateInputFields();
+                toggleDirectFields();
+
+                // Limpiar resultados de cita y referencia
+                citationResult.innerHTML = '';
+                inTextCitationResult.innerHTML = '';
+            };
+
+            // Función para añadir una cita/referencia al historial
+            const addCitationToHistory = (inText, reference, authorKey, year) => {
+                let history = JSON.parse(localStorage.getItem('citationHistory')) || [];
+                
+                // Asignar sufijo
+                let suffix = '';
+                const existingCitations = history.filter(entry => entry.authorKey === authorKey && entry.year === year);
+                if (existingCitations.length > 0) {
+                    suffix = String.fromCharCode(97 + existingCitations.length); // 'a', 'b', 'c', etc.
                 }
-            } else { // Cita en bloque
-                let blockQuoteHTML;
-                if (citationStyle === 'narrative') {
-                    blockQuoteHTML = `
-                        <p>${authorString} (${yearWithLetter}) afirma:</p>
-                        <blockquote class="pl-10 my-4 border-l-4 border-gray-400">
-                            ${textualContent} (p. ${page}).
-                        </blockquote>
-                    `;
-                } else { // Parentética
-                    blockQuoteHTML = `
-                        <blockquote class="pl-10 my-4 border-l-4 border-gray-400">
-                            ${textualContent}
-                        </blockquote>
-                        <p>(${authorString}, ${yearWithLetter}, p. ${page}).</p>
-                    `;
-                }
-                return blockQuoteHTML;
-            }
-        }
 
-        // Función para generar la referencia completa
-        function generateReference(sourceType, authors, bookEditors, data, letter = '') {
-            const year = data.libro_year || data.capitulo_year || data.articulo_year || data.web_year || data.informe_year || data.tesis_year || new Date().getFullYear();
-            const yearWithLetter = `${year}${letter}`;
+                const newEntry = {
+                    id: Date.now(), // Usar timestamp como ID único
+                    inText: inText,
+                    reference: reference,
+                    authorKey: authorKey, // Para agrupar por autor y año
+                    year: year,
+                    suffix: suffix
+                };
+                history.push(newEntry);
+                localStorage.setItem('citationHistory', JSON.stringify(history));
+                reassignSuffixesAndRender(); // Reasignar sufijos y renderizar para asegurar el orden
+            };
+
+            // Función para eliminar una cita/referencia del historial por ID
+            const deleteCitationFromHistory = (id) => {
+                let history = JSON.parse(localStorage.getItem('citationHistory')) || [];
+                history = history.filter(entry => entry.id !== id);
+                localStorage.setItem('citationHistory', JSON.stringify(history));
+                reassignSuffixesAndRender(); // Reasignar sufijos y renderizar
+            };
+
+            // Función para limpiar todo el historial
+            const clearAllHistory = () => {
+                localStorage.removeItem('citationHistory');
+                renderHistory();
+            };
+
+            // Función para reasignar sufijos y renderizar el historial
+            const reassignSuffixesAndRender = () => {
+                let history = JSON.parse(localStorage.getItem('citationHistory')) || [];
+                
+                // Agrupar por autor y año
+                const groupedCitations = {};
+                history.forEach(entry => {
+                    const key = `${entry.authorKey}-${entry.year}`;
+                    if (!groupedCitations[key]) {
+                        groupedCitations[key] = [];
+                    }
+                    groupedCitations[key].push(entry);
+                });
+
+                // Reasignar sufijos
+                for (const key in groupedCitations) {
+                    // Ordenar por ID para mantener el orden original de adición dentro del grupo
+                    groupedCitations[key].sort((a, b) => a.id - b.id); 
+                    groupedCitations[key].forEach((entry, index) => {
+                        const oldSuffix = entry.suffix;
+                        const newSuffix = index > 0 ? String.fromCharCode(97 + index) : '';
+                        
+                        // Actualizar la cita en el texto con el nuevo sufijo
+                        if (oldSuffix !== newSuffix) {
+                            // Eliminar sufijo antiguo si existe
+                            let tempInText = entry.inText.replace(new RegExp(`\\(${entry.year}${oldSuffix}\\)`), `(${entry.year})`);
+                            tempInText = tempInText.replace(new RegExp(`${entry.year}${oldSuffix}`), `${entry.year}`);
+
+                            // Añadir nuevo sufijo si es necesario
+                            if (newSuffix) {
+                                tempInText = tempInText.replace(new RegExp(`\\(${entry.year}\\)`), `(${entry.year}${newSuffix})`);
+                                tempInText = tempInText.replace(new RegExp(`${entry.year}`), `${entry.year}${newSuffix}`);
+                            }
+                            entry.inText = tempInText;
+
+                            // Actualizar la referencia con el nuevo sufijo
+                            let tempReference = entry.reference.replace(new RegExp(`\\(${entry.year}${oldSuffix}\\)`), `(${entry.year})`);
+                            tempReference = tempReference.replace(new RegExp(`${entry.year}${oldSuffix}\\.`), `${entry.year}.`);
+
+                            if (newSuffix) {
+                                tempReference = tempReference.replace(new RegExp(`\\(${entry.year}\\)`), `(${entry.year}${newSuffix})`);
+                                tempReference = tempReference.replace(new RegExp(`${entry.year}\\.`), `${entry.year}${newSuffix}.`);
+                            }
+                            entry.reference = tempReference;
+                            entry.suffix = newSuffix;
+                        }
+                    });
+                }
+
+                // Aplanar el historial de nuevo
+                history = Object.values(groupedCitations).flat();
+                localStorage.setItem('citationHistory', JSON.stringify(history));
+                renderHistory();
+            };
+
+            // Función para renderizar el historial en el DOM
+            const renderHistory = () => {
+                historyContainer.innerHTML = '';
+                let history = JSON.parse(localStorage.getItem('citationHistory')) || [];
+
+                if (history.length === 0) {
+                    historyContainer.innerHTML = '<p class="text-center text-gray-500">No hay citas ni referencias en el historial.</p>';
+                    return;
+                }
+
+                // Ordenar alfabéticamente por el primer autor de la referencia
+                history.sort((a, b) => {
+                    const refA = a.reference.toLowerCase();
+                    const refB = b.reference.toLowerCase();
+                    return refA.localeCompare(refB);
+                });
+
+                history.forEach(entry => {
+                    const historyItem = document.createElement('div');
+                    historyItem.classList.add('bg-gray-50', 'p-4', 'rounded-xl', 'border', 'border-gray-200', 'relative');
+                    historyItem.innerHTML = `
+                        <h4 class="text-sm font-bold text-gray-700 mb-2">Cita en el texto:</h4>
+                        <p class="text-gray-800 break-words mb-4">${entry.inText}</p>
+                        <h4 class="text-sm font-bold text-gray-700 mb-2">Referencia bibliográfica:</h4>
+                        <p class="text-gray-800 break-words french-indent">${entry.reference}</p>
+                        <button class="delete-history-item-button absolute top-2 right-2 bg-red-400 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold" data-id="${entry.id}">X</button>
+                    `;
+                    historyContainer.appendChild(historyItem);
+                });
+
+                // Añadir event listeners a los nuevos botones de eliminar
+                document.querySelectorAll('.delete-history-item-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const idToDelete = parseInt(event.target.dataset.id);
+                        deleteCitationFromHistory(idToDelete);
+                    });
+                });
+            };
+
+            // Manejador de evento para el botón de generación unificada
+            generateButton.addEventListener('click', () => {
+                const selectedType = sourceTypeSelect.value;
+                let authors = [];
+                let editors = []; // Para capítulo de libro
+                let citation = '';
+                let inTextCitation = '';
+                
+                const dynamicAuthorTypes = ['articulo-cientifico', 'tesis', 'libro', 'capitulo-libro', 'simposio'];
+                if (dynamicAuthorTypes.includes(selectedType)) {
+                    const authorCount = parseInt(authorCountInput.value);
+                    for (let i = 1; i <= authorCount; i++) {
+                        const apellido = document.getElementById(`author-apellido-${i}`).value.trim();
+                        const nombre = document.getElementById(`author-nombre-${i}`).value.trim();
+                        if (apellido || nombre) {
+                            authors.push({ apellido, nombre });
+                        }
+                    }
+                }
+
+                // Obtener editores para Capítulo de Libro
+                if (selectedType === 'capitulo-libro') {
+                    const editorCount = parseInt(editorCountInput.value);
+                    for (let i = 1; i <= editorCount; i++) {
+                        const apellido = document.getElementById(`editor-apellido-${i}`).value.trim();
+                        const nombre = document.getElementById(`editor-nombre-${i}`).value.trim();
+                        if (apellido || nombre) {
+                            editors.push({ apellido, nombre });
+                        }
+                    }
+                }
+
+                let inTextAuthorString = '';
+                let inTextYearString = '';
+                let authorKeyForSuffix = ''; // Clave para el sufijo (primer autor + año)
+
+                // Lógica para obtener el autor y año para la cita en el texto
+                switch (selectedType) {
+                    case 'sitio-web':
+                        const selectedAuthorType = document.querySelector('input[name="website-author-type"]:checked').value;
+                        if (selectedAuthorType === 'persona') {
+                            const websitePersonaAuthors = [];
+                            const authorCount = parseInt(websitePersonaAuthorCountInput.value);
+                            for (let i = 1; i <= authorCount; i++) {
+                                const apellido = document.getElementById(`website-persona-author-apellido-${i}`).value.trim();
+                                const nombre = document.getElementById(`website-persona-author-nombre-${i}`).value.trim();
+                                if (apellido || nombre) {
+                                    websitePersonaAuthors.push({ apellido, nombre });
+                                }
+                            }
+                            authors = websitePersonaAuthors; // Sobrescribir authors para sitio-web persona
+                            inTextAuthorString = getInTextAuthors(authors);
+                            authorKeyForSuffix = authors.length > 0 ? authors[0].apellido : '';
+                        } else {
+                            inTextAuthorString = document.getElementById('website-corporate-name').value.trim();
+                            authorKeyForSuffix = inTextAuthorString;
+                        }
+                        inTextYearString = commonYearInput.value.trim();
+                        break;
+                    case 'informe-gubernamental':
+                        inTextAuthorString = document.getElementById('org-name').value.trim();
+                        inTextYearString = commonYearInput.value.trim();
+                        authorKeyForSuffix = inTextAuthorString;
+                        break;
+                    case 'sentencia':
+                        inTextAuthorString = document.getElementById('sentence-title').value.trim();
+                        inTextYearString = commonYearInput.value.trim(); // Usar el año del campo común
+                        authorKeyForSuffix = inTextAuthorString;
+                        break;
+                    case 'ley':
+                        inTextAuthorString = document.getElementById('law-name').value.trim();
+                        inTextYearString = commonYearInput.value.trim(); // Usar el año del campo común
+                        authorKeyForSuffix = inTextAuthorString;
+                        break;
+                    case 'tratado':
+                        inTextAuthorString = document.getElementById('treaty-name').value.trim();
+                        inTextYearString = commonYearInput.value.trim(); // Usar el año del campo común
+                        authorKeyForSuffix = inTextAuthorString;
+                        break;
+                    default: // Tipos con autores dinámicos
+                        inTextAuthorString = getInTextAuthors(authors);
+                        authorKeyForSuffix = authors.length > 0 ? authors[0].apellido : '';
+                        inTextYearString = commonYearInput.value.trim();
+                        break;
+                }
+
+                // Generación de la cita en el texto
+                const style = document.querySelector('input[name="citation-style"]:checked').value;
+                const type = document.querySelector('input[name="citation-type"]:checked').value;
+                const citationText = citationTextInput.value.trim();
+                const pageNumber = pageNumberInput.value.trim();
+
+                // Obtener el sufijo actual para la cita en el texto
+                let currentSuffix = '';
+                const history = JSON.parse(localStorage.getItem('citationHistory')) || [];
+                const existingCitations = history.filter(entry => entry.authorKey === authorKeyForSuffix && entry.year === inTextYearString);
+                if (existingCitations.length > 0) {
+                    currentSuffix = String.fromCharCode(97 + existingCitations.length);
+                }
+                const yearWithSuffix = inTextYearString + currentSuffix;
+
+                if (type === 'indirecta') {
+                    if (style === 'parentetica') {
+                        inTextCitation = `(${inTextAuthorString}, ${yearWithSuffix})`;
+                    } else { // narrativa
+                        inTextCitation = `${inTextAuthorString} (${yearWithSuffix})`;
+                    }
+                } else { // directa
+                    if (!citationText || !pageNumber) {
+                        showMessage('Para citas directas, se requiere el texto y el número de página.', 'red', inTextMessageBox, inTextMessageText);
+                        return;
+                    }
+                    
+                    const wordCount = citationText.split(/\s+/).filter(word => word.length > 0).length;
+
+                    if (wordCount <= 40) {
+                        if (style === 'parentetica') {
+                            inTextCitation = `"${citationText}" (${inTextAuthorString}, ${yearWithSuffix}, p. ${pageNumber}).`;
+                        } else { // narrativa
+                            inTextCitation = `${inTextAuthorString} (${yearWithSuffix}), "${citationText}" (p. ${pageNumber}).`;
+                        }
+                    } else { // mas de 40 palabras
+                        if (style === 'parentetica') {
+                            inTextCitation = `${inTextAuthorString} (${yearWithSuffix}, p. ${pageNumber}):<br><div class="block-indent">${citationText}</div>`;
+                        } else { // narrativa
+                            inTextCitation = `${inTextAuthorString} (${yearWithSuffix}) afirma:<br><div class="block-indent">${citationText}</div> (p. ${pageNumber}).`;
+                        }
+                    }
+                }
+                
+                inTextCitationResult.innerHTML = inTextCitation;
+                inTextCitationResult.dataset.fullText = inTextCitation.replace(/<br>/g, "\n").replace(/<div class="block-indent">|<\/div>/g, "");
+
+                // Generación de la referencia bibliográfica
+                const formattedAuthors = formatAuthors(authors);
+                const yearRef = commonYearInput.value.trim();
+                const urlRef = commonUrlInput.value.trim();
+                const suffixRef = currentSuffix ? currentSuffix : ''; // Usar el mismo sufijo para la referencia
+
+                switch (selectedType) {
+                    case 'articulo-cientifico':
+                        const articleTitle = document.getElementById('article-title').value.trim();
+                        const journalTitle = document.getElementById('journal-title').value.trim();
+                        const volume = document.getElementById('volume').value.trim();
+                        const issue = document.getElementById('issue').value.trim();
+                        const pages = document.getElementById('pages').value.trim();
+                        
+                        // CORRECCIÓN: Se eliminó el punto después de formattedAuthors
+                        citation = `${formattedAuthors} (${yearRef}${suffixRef}). ${articleTitle}. <i>${journalTitle}</i>`;
+                        if (volume) {
+                            citation += `, <i>${volume}</i>`;
+                        }
+                        if (issue) {
+                            citation += `(${issue})`;
+                        }
+                        if (pages) {
+                            citation += `, ${pages}`;
+                        }
+                        citation += `. ${urlRef}`;
+                        break;
+                    
+                    case 'tesis':
+                        const thesisTitle = document.getElementById('thesis-title').value.trim();
+                        const thesisType = document.getElementById('thesis-type').value.trim();
+                        const institution = document.getElementById('institution').value.trim();
+                        const database = document.getElementById('database').value.trim();
+                        
+                        const formattedThesisType = thesisType ? `Tesis de ${thesisType.toLowerCase()}` : '';
+                        
+                        // CORRECCIÓN: Se eliminó el punto después de formattedAuthors
+                        citation = `${formattedAuthors} (${yearRef}${suffixRef}). <i>${thesisTitle}</i> [${formattedThesisType}, ${institution}]. ${database}. ${urlRef}`;
+                        break;
+                    
+                    case 'libro':
+                        const bookTitle = document.getElementById('book-title').value.trim();
+                        const bookEdition = document.getElementById('book-edition').value.trim();
+                        const publisher = document.getElementById('publisher').value.trim();
+
+                        // CORRECCIÓN: Se eliminó el punto después de formattedAuthors
+                        citation = `${formattedAuthors} (${yearRef}${suffixRef}). <i>${bookTitle}</i>`;
+                        if (bookEdition) {
+                            citation += ` (${bookEdition})`;
+                        }
+                        citation += `. ${publisher}. ${urlRef}`;
+                        break;
+
+                    case 'capitulo-libro':
+                        const chapterTitle = document.getElementById('chapter-title').value.trim();
+                        const formattedEditors = formatEditors(editors);
+                        const bookTitleCL = document.getElementById('book-title-cl').value.trim();
+                        const chapterPages = document.getElementById('chapter-pages').value.trim();
+                        const publisherCL = document.getElementById('publisher-cl').value.trim();
+                        
+                        // CORRECCIÓN: Se eliminó el punto después de formattedAuthors
+                        citation = `${formattedAuthors} (${yearRef}${suffixRef}). ${chapterTitle}. En ${formattedEditors} (Ed.), <i>${bookTitleCL}</i>`;
+                        if (chapterPages) {
+                            citation += ` (pp. ${chapterPages})`;
+                        }
+                        citation += `. ${publisherCL}. ${urlRef}`;
+                        break;
+                    
+                    case 'informe-gubernamental':
+                        const orgName = document.getElementById('org-name').value.trim();
+                        const reportTitle = document.getElementById('report-title').value.trim();
+                        const reportNumber = document.getElementById('report-number').value.trim();
+                        
+                        // No se modifica aquí, ya que orgName no pasa por formatAuthors
+                        citation = `${orgName}. (${yearRef}${suffixRef}). <i>${reportTitle}</i>`;
+                        if (reportNumber) {
+                            citation += ` (${reportNumber})`;
+                        }
+                        citation += `. ${urlRef}`;
+                        break;
+
+                    case 'sentencia':
+                        const sentenceTitle = document.getElementById('sentence-title').value.trim();
+                        const sentenceDate = document.getElementById('sentence-date').value.trim();
+                        const courtReport = document.getElementById('court-report').value.trim();
+                        const magistrate = document.getElementById('magistrate').value.trim();
+                        
+                        let magistratePart = '';
+                        if (magistrate) {
+                            magistratePart = ` (${magistrate})`;
+                        }
+
+                        // No se modifica aquí, ya que sentenceTitle no pasa por formatAuthors
+                        citation = `${sentenceTitle}. (${yearRef}, ${sentenceDate}). ${courtReport}${magistratePart}. ${urlRef}`;
+                        break;
+
+                    case 'ley':
+                        const lawName = document.getElementById('law-name').value.trim();
+                        const lawDate = document.getElementById('law-date').value.trim();
+                        const source = document.getElementById('source').value.trim();
+                        const sectionArticle = document.getElementById('section-article').value.trim();
+                        
+                        let sectionArticlePart = '';
+                        if (sectionArticle) {
+                            sectionArticlePart = `. ${sectionArticle}`;
+                        }
+
+                        // No se modifica aquí, ya que lawName no pasa por formatAuthors
+                        citation = `${lawName}. (${yearRef}, ${lawDate}). ${source}${sectionArticlePart}. ${urlRef}`;
+                        break;
+
+                    case 'tratado':
+                        const treatyName = document.getElementById('treaty-name').value.trim();
+                        const treatyDate = document.getElementById('treaty-date').value.trim();
+                        
+                        // No se modifica aquí, ya que treatyName no pasa por formatAuthors
+                        citation = `${treatyName}, ${treatyDate}, ${urlRef}`;
+                        break;
+
+                    case 'sitio-web':
+                        const pageTitle = document.getElementById('page-title').value.trim();
+                        const siteName = document.getElementById('site-name').value.trim();
+                        const websiteCorporateNameInput = document.getElementById('website-corporate-name');
+                        const websiteDay = document.getElementById('website-day').value.trim();
+                        const websiteMonth = document.getElementById('website-month').value.trim();
+                        const selectedAuthorType = document.querySelector('input[name="website-author-type"]:checked').value;
+
+                        let authorString = '';
+                        if (selectedAuthorType === 'persona') {
+                            const websitePersonaAuthors = [];
+                            const authorCount = parseInt(websitePersonaAuthorCountInput.value);
+                            for (let i = 1; i <= authorCount; i++) {
+                                const apellido = document.getElementById(`website-persona-author-apellido-${i}`).value.trim();
+                                const nombre = document.getElementById(`website-persona-author-nombre-${i}`).value.trim();
+                                if (apellido || nombre) {
+                                    websitePersonaAuthors.push({ apellido, nombre });
+                                }
+                            }
+                            authorString = formatAuthors(websitePersonaAuthors);
+                        } else {
+                            authorString = websiteCorporateNameInput.value.trim();
+                        }
+
+                        let datePart = `(${yearRef}${suffixRef})`;
+                        if (websiteDay && websiteMonth) {
+                            datePart = `(${yearRef}, ${websiteDay} de ${websiteMonth})`;
+                        } else if (websiteMonth) {
+                            datePart = `(${yearRef}, ${websiteMonth})`;
+                        }
+
+                        // CORRECCIÓN: Se eliminó el punto después de authorString
+                        citation = `${authorString} ${datePart}. <i>${pageTitle}</i>. ${siteName}. ${urlRef}`;
+                        break;
+                    
+                    case 'simposio':
+                        const conferenceTitle = document.getElementById('conference-title').value.trim();
+                        const contributionType = document.getElementById('contribution-type').value.trim();
+                        const conferenceName = document.getElementById('conference-name').value.trim();
+                        const city = document.getElementById('city').value.trim();
+                        const country = document.getElementById('country').value.trim();
+                        const conferenceDay = document.getElementById('conference-day').value.trim();
+                        const conferenceMonth = document.getElementById('conference-month').value.trim();
+
+                        let conferenceDatePart = `(${yearRef}${suffixRef})`;
+                        if (conferenceDay && conferenceMonth) {
+                            conferenceDatePart = `(${yearRef}, ${conferenceDay} de ${conferenceMonth})`;
+                        } else if (conferenceMonth) {
+                            conferenceDatePart = `(${yearRef}, ${conferenceMonth})`;
+                        }
+                        
+                        // CORRECCIÓN: Se eliminó el punto después de formattedAuthors
+                        citation = `${formattedAuthors} ${conferenceDatePart}. ${conferenceTitle} [${contributionType}]. <i>${conferenceName}</i>, ${city}, ${country}. ${urlRef}`;
+                        break;
+                }
+                
+                citationResult.innerHTML = citation;
+                citationResult.dataset.fullText = citation;
+
+                // Añadir al historial
+                addCitationToHistory(inTextCitationResult.innerHTML, citationResult.innerHTML, authorKeyForSuffix, inTextYearString);
+            });
+
+            // Manejador de evento para el botón de copiar referencias bibliográficas
+            copyButton.addEventListener('click', () => {
+                const textToCopy = citationResult.dataset.fullText || citationResult.innerText;
+                if (!textToCopy) {
+                    showMessage('No hay cita para copiar.', 'red', messageBox, messageText);
+                    return;
+                }
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    showMessage('¡Copiado al portapapeles!', 'green', messageBox, messageText);
+                } catch (err) {
+                    showMessage('Error al copiar.', 'red', messageBox, messageText);
+                } finally {
+                    document.body.removeChild(tempTextArea);
+                }
+            });
             
-            let reference = '';
+            // Manejador de evento para el botón de copiar citas en el texto
+            copyInTextButton.addEventListener('click', () => {
+                const textToCopy = inTextCitationResult.dataset.fullText || inTextCitationResult.innerText;
+                if (!textToCopy) {
+                    showMessage('No hay cita para copiar.', 'red', inTextMessageBox, inTextMessageText);
+                    return;
+                }
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    showMessage('¡Copiado al portapapeles!', 'green', inTextMessageBox, inTextMessageText);
+                } catch (err) {
+                    showMessage('Error al copiar.', 'red', inTextMessageBox, inTextMessageText);
+                } finally {
+                    document.body.removeChild(tempTextArea);
+                }
+            });
 
-            switch (sourceType) {
-                case 'libro':
-                    const authorsStr = formatAuthors(authors);
-                    const edition = data.libro_edition ? `(${data.libro_edition} ed.). ` : '';
-                    const url = data.libro_url ? ` ${data.libro_url}` : '';
-                    reference = `${authorsStr} (${yearWithLetter}). <i class="italic">${data.libro_title}</i>. ${edition}${data.libro_editorial}.${url}`;
-                    break;
-                case 'capitulo-libro':
-                    const chapterAuthorsStr = formatAuthors(authors);
-                    const bookEditorsStr = formatAuthors(bookEditors);
-                    const pagesPart = data.capitulo_paginas ? `(pp. ${data.capitulo_paginas})` : '';
-                    const capUrl = data.capitulo_url ? ` ${data.capitulo_url}` : '';
-                    reference = `${chapterAuthorsStr} (${yearWithLetter}). ${data.capitulo_title}. En ${bookEditorsStr} (Ed.), <i class="italic">${data.capitulo_libro_title}</i> ${pagesPart}. ${data.capitulo_editorial}.${capUrl}`;
-                    break;
-                case 'articulo-cientifico':
-                    const articleAuthorsStr = formatAuthors(authors);
-                    const issuePart = data.journal_issue ? `(${data.journal_issue})` : '';
-                    const pagesPartArticle = data.articulo_paginas ? `, ${data.articulo_paginas}` : '';
-                    const doiPart = data.articulo_url ? ` ${data.articulo_url}` : '';
-                    reference = `${articleAuthorsStr} (${yearWithLetter}). ${data.articulo_title}. <i class="italic">${data.journal_title}</i>, <i class="italic">${data.journal_volume}</i>${issuePart}${pagesPartArticle}.${doiPart}`;
-                    break;
-                case 'sitio-web':
-                    const webAuthorsStr = formatAuthors(authors);
-                    const webUrl = data.web_url ? ` ${data.web_url}` : '';
-                    reference = `${webAuthorsStr} (${yearWithLetter}). <i class="italic">${data.web_title}</i>. ${data.web_name}.${webUrl}`;
-                    break;
-                case 'informe-gubernamental':
-                    const informeAuthorsStr = formatAuthors(authors);
-                    const entidad = data.informe_entidad ? `${data.informe_entidad}. ` : '';
-                    const numPub = data.informe_number ? ` (${data.informe_number}). ` : '. ';
-                    const informeUrl = data.informe_url ? ` ${data.informe_url}` : '';
-                    reference = `${informeAuthorsStr} (${yearWithLetter}). <i class="italic">${data.informe_title}</i>${numPub}${informeUrl}`;
-                    break;
-                case 'tesis':
-                    const tesisAuthorsStr = formatAuthors(authors);
-                    const dbName = data.tesis_database ? ` ${data.tesis_database}.` : '';
-                    const tesisUrl = data.tesis_url ? ` ${data.tesis_url}` : '';
-                    reference = `${tesisAuthorsStr} (${yearWithLetter}). <i class="italic">${data.tesis_title}</i> [${data.tesis_type}, ${data.tesis_institucion}].${dbName}${tesisUrl}`;
-                    break;
-                case 'ley':
-                    const seccion = data.ley_seccion ? ` ${data.ley_seccion}.` : '.';
-                    const leyUrl = data.ley_url ? ` ${data.ley_url}` : '';
-                    reference = `<i class="italic">${data.ley_nombre}</i>. (${data.ley_fecha}). ${data.ley_fuente}${seccion}${leyUrl}`;
-                    break;
-                case 'tratado-convencion':
-                    const fecha = data.tratado_fecha ? `, ${data.tratado_fecha}` : '';
-                    const tratadoUrl = data.tratado_url ? `, ${data.tratado_url}` : '';
-                    reference = `<i class="italic">${data.tratado_nombre}</i>${fecha}${tratadoUrl}.`;
-                    break;
-                default:
-                    reference = 'Referencia no disponible para este tipo de fuente.';
-                    break;
-            }
+            // Manejador de evento para el botón de limpiar todo el historial
+            clearHistoryButton.addEventListener('click', () => {
+                if (confirm('¿Estás seguro de que quieres eliminar todo el historial?')) {
+                    clearAllHistory();
+                    showMessage('Historial eliminado.', 'green', historyContainer.closest('.mt-8').querySelector('#message-text') || messageText, historyContainer.closest('.mt-8').querySelector('#message-text') || messageText);
+                }
+            });
 
-            return reference;
-        }
+            // Manejador de evento para el botón de borrar campos
+            clearFieldsButton.addEventListener('click', clearAllFormFields);
 
-        // Inicializar los inputs de autores persona
-        document.addEventListener('DOMContentLoaded', () => {
-            updateChapterPersonaAuthorInputs(1);
-            updateBookEditorInputs(1);
+            // Función reutilizable para mostrar un mensaje temporal en la caja de mensajes
+            const showMessage = (message, color, messageBoxElement, messageTextElement) => {
+                messageTextElement.textContent = message;
+                messageTextElement.style.color = color === 'red' ? '#dc2626' : '#16a34a';
+                messageBoxElement.classList.remove('hidden');
+                messageBoxElement.classList.add('flex');
+                setTimeout(() => {
+                    messageBoxElement.classList.add('hidden');
+                    messageBoxElement.classList.remove('flex');
+                }, 2000);
+            };
+
+            // Inicializa la vista para mostrar los campos del primer tipo de fuente por defecto
+            updateInputFields();
+            toggleDirectFields();
+            renderHistory(); // Cargar el historial al iniciar la página
         });
-
     </script>
 </body>
 </html>
+
